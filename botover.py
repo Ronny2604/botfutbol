@@ -128,9 +128,14 @@ with st.sidebar:
     st.markdown(f'<a href="{LINK_CANAL}" target="_blank" class="btn-side" style="background: #0088cc;">🔵 CANAL TELEGRAM</a>', unsafe_allow_html=True)
     
     st.markdown("---")
-    st.subheader("📊 GESTÃO")
-    banca = st.number_input("Banca R$", value=100.0)
-    st.info(f"💰 Entrada (3%): R$ {banca * 0.03:.2f}")
+    st.subheader("📊 GESTÃO & ALAVANCAGEM")
+    banca = st.number_input("Banca Atual (R$):", value=100.0)
+    entrada = banca * 0.03
+    st.info(f"💰 Entrada Ideal (3%): R$ {entrada:.2f}")
+    
+    # RECURSO PREMIUM: PROJEÇÃO DE JUROS COMPOSTOS
+    projecao_30d = banca * (1.03 ** 30)
+    st.success(f"📈 Projeção em 30 Dias: R$ {projecao_30d:.2f}")
 
     if st.session_state.is_admin:
         st.markdown("---")
@@ -152,7 +157,6 @@ with st.sidebar:
         st.rerun()
 
 # --- 8. RADAR E SISTEMA PREMIUM ---
-# ADICIONAMOS A TERCEIRA ABA (HISTÓRICO VIP)
 t1, t2, t3 = st.tabs(["🚀 SCANNER IA", "📋 BILHETE", "🏆 HISTÓRICO VIP"])
 
 LIGAS_DISPONIVEIS = {
@@ -280,32 +284,38 @@ with t1:
                 st.error(f"Erro de conexão: {e}")
                 status.update(label="Erro de Conexão.", state="error")
 
-    # RECURSO PREMIUM 1: BOTÃO MÁGICO DE MÚLTIPLA AUTOMÁTICA
     if st.session_state.analisados:
         st.markdown("---")
-        if st.button("🎲 GERAR DUPLA SEGURA IA"):
-            if len(st.session_state.analisados) >= 2:
-                # Escolhe as duas apostas mais seguras (menor odd) que a IA encontrou
-                seguras = sorted(st.session_state.analisados, key=lambda x: x['o'])[:2]
-                st.session_state.bilhete.extend(seguras)
-                st.success("✅ Dupla Segura adicionada automaticamente ao Bilhete!")
-            else:
-                st.warning("Preciso de pelo menos 2 jogos varridos para montar a dupla.")
+        
+        # RECURSO PREMIUM: MODO SNIPER (FILTRO)
+        st.markdown("<h5 style='color:white;'>🎯 MODO SNIPER: Filtro de Confiança</h5>", unsafe_allow_html=True)
+        min_conf = st.slider("Mostrar apenas jogos com assertividade acima de (%):", min_value=85, max_value=99, value=85)
+        
+        col_m1, col_m2 = st.columns([1, 2])
+        with col_m1:
+            if st.button("🎲 GERAR DUPLA SEGURA IA"):
+                if len(st.session_state.analisados) >= 2:
+                    seguras = sorted(st.session_state.analisados, key=lambda x: x['o'])[:2]
+                    st.session_state.bilhete.extend(seguras)
+                    st.success("✅ Dupla Segura adicionada!")
+                else:
+                    st.warning("Preciso de 2 jogos varridos.")
 
-    # Exibe os jogos com RECURSO PREMIUM 2: BARRA DE PROGRESSO VISUAL NEON
-    for idx, item in enumerate(st.session_state.analisados):
-        st.markdown(f"""
-        <div style='background:#0a1626; padding:15px; border-radius:12px; border-left: 5px solid {cor_neon}; margin-bottom:10px;'>
-            <div style='color:{cor_neon}; font-weight:bold; font-size:12px; margin-bottom: 5px;'>🔥 IA CONFIDENCE: {item['conf']}%</div>
-            <div style='width: 100%; background-color: #040d1a; border-radius: 5px; margin-bottom: 12px; overflow: hidden;'>
-                <div style='width: {item['conf']}%; height: 6px; background-color: {cor_neon}; border-radius: 5px; box-shadow: 0 0 8px {cor_neon};'></div>
-            </div>
-            <div style='font-size:18px; font-weight:bold; color:white;'>{item['jogo']}</div>
-            <div style='margin-top:8px; color:#bbb;'>🎯 Mercado: <b>{item['m']}</b> | <span style='color:{cor_neon};'>@{item['o']}</span></div>
-        </div>""", unsafe_allow_html=True)
-        if st.button(f"ADICIONAR JOGO {idx+1}", key=f"btn_{idx}"):
-            st.session_state.bilhete.append(item)
-            st.toast("✅ Adicionado!")
+        # Exibe os jogos passando pelo filtro do Sniper
+        for idx, item in enumerate(st.session_state.analisados):
+            if item['conf'] >= min_conf:
+                st.markdown(f"""
+                <div style='background:#0a1626; padding:15px; border-radius:12px; border-left: 5px solid {cor_neon}; margin-bottom:10px;'>
+                    <div style='color:{cor_neon}; font-weight:bold; font-size:12px; margin-bottom: 5px;'>🔥 IA CONFIDENCE: {item['conf']}%</div>
+                    <div style='width: 100%; background-color: #040d1a; border-radius: 5px; margin-bottom: 12px; overflow: hidden;'>
+                        <div style='width: {item['conf']}%; height: 6px; background-color: {cor_neon}; border-radius: 5px; box-shadow: 0 0 8px {cor_neon};'></div>
+                    </div>
+                    <div style='font-size:18px; font-weight:bold; color:white;'>{item['jogo']}</div>
+                    <div style='margin-top:8px; color:#bbb;'>🎯 Mercado: <b>{item['m']}</b> | <span style='color:{cor_neon};'>@{item['o']}</span></div>
+                </div>""", unsafe_allow_html=True)
+                if st.button(f"ADICIONAR JOGO", key=f"btn_{item['jogo']}_{idx}"):
+                    st.session_state.bilhete.append(item)
+                    st.toast("✅ Adicionado!")
 
 with t2:
     if st.session_state.bilhete:
@@ -320,36 +330,50 @@ with t2:
             msg_whats += f"🏟️ {b['jogo']}\n🎯 {b['m']} (@{b['o']})\n\n"
         
         st.markdown("---")
+        
+        # RECURSO PREMIUM: SUPER ODD (+15% de lucro virtual)
+        is_super_odd = False
+        if len(st.session_state.bilhete) >= 3:
+            odd_f *= 1.15
+            is_super_odd = True
+            
+        if is_super_odd:
+            st.warning("🔥 SUPER ODD ATIVADA! Bônus de +15% aplicado por múltipla de 3+ jogos!")
+            
         st.markdown(f"### 📊 ODD TOTAL: {odd_f:.2f}")
         
-        # RECURSO PREMIUM 3: CALCULADORA DE LUCRO EXATO
         valor_aposta = st.number_input("💸 Qual valor deseja investir? (R$):", min_value=1.0, value=10.0, step=5.0)
         retorno_esperado = valor_aposta * odd_f
         st.markdown(f"<h3 style='color:{cor_neon}; text-shadow: 0 0 10px {cor_neon};'>🤑 RETORNO ESPERADO: R$ {retorno_esperado:.2f}</h3>", unsafe_allow_html=True)
         st.markdown("<br>", unsafe_allow_html=True)
         
-        if st.button("ENVIAR PRO TELEGRAM"):
-            final_msg_tg = msg_tg + f"📊 *Odd Total: {odd_f:.2f}*\n💸 *Aposta:* R$ {valor_aposta:.2f}\n🤑 *Retorno:* R$ {retorno_esperado:.2f}\n\n🎰 [APOSTE AQUI]({LINK_CASA_1})"
-            asyncio.run(Bot(TOKEN).send_message(CHAT_ID, final_msg_tg, parse_mode='Markdown'))
-            st.success("Sinal enviado para o Telegram!")
-            
+        final_msg_tg = msg_tg + f"📊 *Odd Total: {odd_f:.2f}*\n💸 *Aposta:* R$ {valor_aposta:.2f}\n🤑 *Retorno:* R$ {retorno_esperado:.2f}\n\n🎰 [APOSTE AQUI]({LINK_CASA_1})"
         final_msg_whats = msg_whats + f"📊 *Odd Total: {odd_f:.2f}*\n💸 Aposta: R$ {valor_aposta:.2f}\n🤑 Retorno: R$ {retorno_esperado:.2f}\n\n🎰 APOSTE AQUI: {LINK_CASA_1}"
-        texto_codificado = urllib.parse.quote(final_msg_whats)
-        link_zap = f"https://api.whatsapp.com/send?text={texto_codificado}"
-        st.link_button("🟢 COMPARTILHAR NO WHATSAPP", link_zap)
+        
+        col_b1, col_b2, col_b3 = st.columns(3)
+        with col_b1:
+            if st.button("ENVIAR TELEGRAM"):
+                asyncio.run(Bot(TOKEN).send_message(CHAT_ID, final_msg_tg, parse_mode='Markdown'))
+                st.success("Sinal enviado!")
+        with col_b2:
+            texto_codificado = urllib.parse.quote(final_msg_whats)
+            link_zap = f"https://api.whatsapp.com/send?text={texto_codificado}"
+            st.link_button("🟢 ZAP", link_zap)
+        with col_b3:
+            # RECURSO PREMIUM: BAIXAR RECIBO DO BILHETE EM TXT
+            st.download_button(label="📄 BAIXAR RECIBO", data=final_msg_whats, file_name="cupom_v8_supreme.txt", mime="text/plain")
 
-        if st.button("RESETAR BILHETE"):
+        st.markdown("<br>", unsafe_allow_html=True)
+        if st.button("RESETAR BILHETE", use_container_width=True):
             st.session_state.bilhete = []
             st.rerun()
     else:
         st.info("Nenhum jogo selecionado.")
 
-# RECURSO PREMIUM 4: ABA DE PROVA SOCIAL (ÚLTIMOS GREENS)
 with t3:
     st.markdown("<h4 style='color:white;'>🏆 ÚLTIMOS GREENS DO VIP</h4>", unsafe_allow_html=True)
     st.markdown("<p style='color:#bbb;'>Confira o histórico recente de acertos do nosso sistema de inteligência artificial:</p>", unsafe_allow_html=True)
     
-    # Dados fictícios para gerar prova social (gatilho mental poderoso)
     historico = [
         {"j": "Real Madrid x Barcelona", "m": "Over 2.5 Gols", "o": 1.65},
         {"j": "Flamengo x Fluminense", "m": "Vitória Flamengo", "o": 1.90},
