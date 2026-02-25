@@ -193,7 +193,6 @@ with t1:
         with st.status(f"Analisando jogos da {liga_selecionada}...", expanded=True) as status:
             st.write("📡 Conectando com a base de dados esportiva...")
             
-            # LINK CORRIGIDO: APENAS h2h e totals
             url = f"https://api.the-odds-api.com/v4/sports/{codigo_da_liga}/odds/?apiKey={ODDS_API_KEY}&regions=eu,uk&markets=h2h,totals"
             
             try:
@@ -230,31 +229,45 @@ with t1:
                         
                         nome_jogo = f"🕒 {hora_jogo} | {casa} x {fora}"
                         
-                        # --- ANÁLISE DE MERCADOS ---
+                        # --- ANÁLISE PROFUNDA DE MERCADOS DIVERSIFICADOS ---
                         mercados_encontrados = []
                         
+                        # Varre TODAS as casas disponíveis para não perder nenhum mercado
                         if jogo.get('bookmakers'):
-                            for mercado in jogo['bookmakers'][0].get('markets', []):
-                                if mercado['key'] == 'h2h':
-                                    for out in mercado['outcomes']:
-                                        if out['name'] == casa: mercados_encontrados.append({"m": f"Vitória {casa}", "o": out['price']})
-                                        elif out['name'] == fora: mercados_encontrados.append({"m": f"Vitória {fora}", "o": out['price']})
-                                
-                                elif mercado['key'] == 'totals':
-                                    for out in mercado['outcomes']:
-                                        if out['name'] == 'Over' and out.get('point') == 2.5:
-                                            mercados_encontrados.append({"m": "Over 2.5 Gols", "o": out['price']})
-                                        elif out['name'] == 'Over' and out.get('point') == 1.5:
-                                            mercados_encontrados.append({"m": "Over 1.5 Gols", "o": out['price']})
+                            for bookie in jogo['bookmakers']:
+                                for mercado in bookie.get('markets', []):
+                                    # Pega Vitória e Empate
+                                    if mercado['key'] == 'h2h':
+                                        for out in mercado['outcomes']:
+                                            if out['name'] == casa: mercados_encontrados.append({"m": f"Vitória {casa}", "o": out['price']})
+                                            elif out['name'] == fora: mercados_encontrados.append({"m": f"Vitória {fora}", "o": out['price']})
+                                            elif out['name'].lower() == 'draw': mercados_encontrados.append({"m": "Empate", "o": out['price']})
+                                    
+                                    # Pega mercado de Gols (Over / Under)
+                                    elif mercado['key'] == 'totals':
+                                        for out in mercado['outcomes']:
+                                            pt = out.get('point', 0)
+                                            if out['name'] == 'Over':
+                                                mercados_encontrados.append({"m": f"Over {pt} Gols", "o": out['price']})
+                                            elif out['name'] == 'Under':
+                                                mercados_encontrados.append({"m": f"Under {pt} Gols", "o": out['price']})
 
-                        # O Bot "escolhe" o mercado mais seguro (Odds entre 1.30 e 2.20)
+                        # Remove duplicadas (pega só uma opção de cada mercado)
+                        mercados_unicos = {}
+                        for m in mercados_encontrados:
+                            if m['m'] not in mercados_unicos:
+                                mercados_unicos[m['m']] = m
+                                
+                        lista_mercados = list(mercados_unicos.values())
+
+                        # O Bot agora diversifica e escolhe um mercado aleatório e seguro (Odds entre 1.30 e 2.40)
                         melhor_aposta = None
-                        if mercados_encontrados:
-                            apostas_validas = [ap for ap in mercados_encontrados if 1.30 <= ap['o'] <= 2.20]
+                        if lista_mercados:
+                            apostas_validas = [ap for ap in lista_mercados if 1.30 <= ap['o'] <= 2.40]
                             if apostas_validas:
                                 melhor_aposta = random.choice(apostas_validas)
                             else:
-                                melhor_aposta = mercados_encontrados[0]
+                                melhor_aposta = random.choice(lista_mercados) # Se não tiver nada seguro, pega aleatório
                         
                         if melhor_aposta:
                             st.session_state.analisados.append({
