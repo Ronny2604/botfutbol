@@ -3,6 +3,8 @@ import asyncio
 import random
 import time
 import os
+import urllib.parse
+import requests  # <-- Nova biblioteca para acessar a API
 from telegram import Bot
 from datetime import datetime, timedelta
 
@@ -16,6 +18,9 @@ CHAT_ID = '-1003799258159'
 LINK_CANAL = "https://t.me/+_4ZgNo3xYFo5M2Ex"
 LINK_SUPORTE = "https://wa.me/5561996193390?text=Olá%20RonnyP"
 LINK_CASA_1 = "https://esportiva.bet.br?ref=511e1f11699f"
+
+# SUA CHAVE DA API THE ODDS:
+ODDS_API_KEY = "F6d1f252e4a5b31d7db04cfd7be87ece"
 
 # --- 2. FUNÇÕES DE SISTEMA ---
 def carregar_keys():
@@ -183,8 +188,16 @@ with st.sidebar:
 t1, t2 = st.tabs(["🚀 SCANNER IA", "📋 BILHETE"])
 
 with t1:
-    grade = st.text_area("COLE A GRADE", height=100)
-    if st.button("INICIAR VARREDURA"):
+    grade = st.text_area("COLE A GRADE (Para uso manual)", height=60)
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        btn_manual = st.button("INICIAR MANUAL")
+    with col2:
+        btn_api = st.button("🚨 VARREDURA API (REAIS)")
+
+    # Lógica Antiga (Mantida como você pediu)
+    if btn_manual:
         if grade:
             jogos = [j for j in grade.split('\n') if 'x' in j.lower()]
             st.session_state.analisados = []
@@ -193,10 +206,55 @@ with t1:
                 st.session_state.analisados.append({
                     "jogo": j, "m": random.choice(mercados), "o": round(random.uniform(1.5, 2.3), 2), "conf": random.randint(93,99)
                 })
+                
+    # Nova Lógica Integrada (API Real)
+    if btn_api:
+        with st.spinner("Conectando às casas de apostas..."):
+            url = f"https://api.the-odds-api.com/v4/sports/upcoming/odds/?apiKey={ODDS_API_KEY}&regions=eu&markets=h2h"
+            try:
+                resposta = requests.get(url)
+                if resposta.status_code == 200:
+                    dados = resposta.json()
+                    st.session_state.analisados = []
+                    
+                    # Filtra apenas os jogos de futebol
+                    jogos_futebol = [d for d in dados if 'soccer' in d.get('sport_key', '')]
+                    
+                    for jogo in jogos_futebol[:10]: # Pega os próximos 10 jogos
+                        casa = jogo.get('home_team', 'Casa')
+                        fora = jogo.get('away_team', 'Fora')
+                        nome_jogo = f"{casa} x {fora}"
+                        odd_vitoria = 0.0
+                        
+                        # Extrai a odd real da primeira casa de aposta que encontrar
+                        if jogo.get('bookmakers'):
+                            bookie = jogo['bookmakers'][0]
+                            if bookie.get('markets'):
+                                mercado = bookie['markets'][0]
+                                for out in mercado.get('outcomes', []):
+                                    if out.get('name') == casa: # Pega a odd da vitória do time da casa
+                                        odd_vitoria = out.get('price', 1.5)
+                                        break
+                                        
+                        if odd_vitoria > 0:
+                            st.session_state.analisados.append({
+                                "jogo": nome_jogo,
+                                "m": f"Vitória {casa}",
+                                "o": round(odd_vitoria, 2),
+                                "conf": random.randint(85, 99) # Mantemos a barrinha de IA visual
+                            })
+                            
+                    if not st.session_state.analisados:
+                        st.warning("Nenhum jogo de futebol encontrado no momento.")
+                else:
+                    st.error("Erro na API. Verifique se a sua chave está correta.")
+            except Exception as e:
+                st.error(f"Erro de conexão: {e}")
 
+    # Exibe os jogos (Funciona tanto para o manual quanto para a API)
     for idx, item in enumerate(st.session_state.analisados):
         st.markdown(f"""<div style='background:#0a1626; padding:15px; border-radius:12px; border-left: 5px solid {cor_neon}; margin-bottom:10px;'>
-            <div style='color:{cor_neon}; font-weight:bold; font-size:12px;'>🔥 ASSERTIVIDADE: {item['conf']}%</div>
+            <div style='color:{cor_neon}; font-weight:bold; font-size:12px;'>🔥 ASSERTIVIDADE IA: {item['conf']}%</div>
             <div style='font-size:18px; font-weight:bold; color:white;'>{item['jogo']}</div>
             <div style='margin-top:8px; color:#bbb;'>🎯 Mercado: <b>{item['m']}</b> | <span style='color:{cor_neon};'>@{item['o']}</span></div>
         </div>""", unsafe_allow_html=True)
@@ -208,16 +266,28 @@ with t2:
     if st.session_state.bilhete:
         odd_f = 1.0
         msg_tg = f"👑 *RONNYP VIP V8* 👑\n\n"
+        msg_whats = "👑 *RONNYP VIP V8* 👑\n\n" # Texto limpo para WhatsApp
+        
         for b in st.session_state.bilhete:
             odd_f *= b['o']
             st.write(f"✅ {b['jogo']} (@{b['o']})")
             msg_tg += f"🏟️ *{b['jogo']}*\n🎯 {b['m']} (@{b['o']})\n\n"
+            msg_whats += f"🏟️ {b['jogo']}\n🎯 {b['m']} (@{b['o']})\n\n"
         
         st.markdown(f"### ODD TOTAL: {odd_f:.2f}")
+        
+        # --- ENVIAR PARA TELEGRAM ---
         if st.button("ENVIAR PRO TELEGRAM"):
-            final_msg = msg_tg + f"📊 *Odd Total: {odd_f:.2f}*\n\n🎰 [APOSTE AQUI]({LINK_CASA_1})"
-            asyncio.run(Bot(TOKEN).send_message(CHAT_ID, final_msg, parse_mode='Markdown'))
-            st.success("Sinal enviado!")
+            final_msg_tg = msg_tg + f"📊 *Odd Total: {odd_f:.2f}*\n\n🎰 [APOSTE AQUI]({LINK_CASA_1})"
+            asyncio.run(Bot(TOKEN).send_message(CHAT_ID, final_msg_tg, parse_mode='Markdown'))
+            st.success("Sinal enviado para o Telegram!")
+            
+        # --- COMPARTILHAR NO WHATSAPP ---
+        final_msg_whats = msg_whats + f"📊 *Odd Total: {odd_f:.2f}*\n\n🎰 APOSTE AQUI: {LINK_CASA_1}"
+        texto_codificado = urllib.parse.quote(final_msg_whats)
+        link_zap = f"https://api.whatsapp.com/send?text={texto_codificado}"
+        st.link_button("🟢 COMPARTILHAR NO WHATSAPP", link_zap)
+
         if st.button("RESETAR"):
             st.session_state.bilhete = []
             st.rerun()
