@@ -19,8 +19,8 @@ LINK_CANAL = "https://t.me/+_4ZgNo3xYFo5M2Ex"
 LINK_SUPORTE = "https://wa.me/5561996193390?text=Olá%20RonnyP"
 LINK_CASA_1 = "https://esportiva.bet.br?ref=511e1f11699f"
 
-# SUA CHAVE DA API-SPORTS (CORRETA E ATIVA)
-ODDS_API_KEY = "7d01c19fd029a0f1f529051d6904d21b"
+# SUA CHAVE DA THE ODDS API (NOVA E BLINDADA CONTRA BLOQUEIOS)
+ODDS_API_KEY = "Da4633249ece20283d29604cec7a7114"
 
 # --- 2. FUNÇÕES DE SISTEMA ---
 def carregar_keys():
@@ -207,77 +207,68 @@ with t1:
                     "jogo": j, "m": random.choice(mercados), "o": round(random.uniform(1.5, 2.3), 2), "conf": random.randint(93,99)
                 })
                 
-    # Nova Lógica Integrada (API-SPORTS - Real com Filtro VIP)
+    # Nova Lógica Integrada (THE ODDS API - Real com Filtro VIP)
     if btn_api:
         with st.spinner("Puxando jogos principais e odds reais..."):
-            hoje = datetime.now().strftime("%Y-%m-%d")
-            # 1. Puxa os jogos do dia que ainda não começaram
-            url_fixtures = f"https://v3.football.api-sports.io/fixtures?date={hoje}&status=NS"
-            headers = {
-                'x-apisports-key': ODDS_API_KEY
-            }
+            # Essa URL puxa TODOS os esportes do mundo de uma vez (gasta só 1 crédito da API)
+            url = f"https://api.the-odds-api.com/v4/sports/upcoming/odds/?apiKey={ODDS_API_KEY}&regions=eu,uk&markets=h2h"
             
             try:
-                resposta = requests.get(url_fixtures, headers=headers)
+                resposta = requests.get(url)
                 if resposta.status_code == 200:
                     dados = resposta.json()
+                    st.session_state.analisados = []
                     
-                    if dados.get("errors") and len(dados["errors"]) > 0:
-                        st.error(f"Erro na conta: {dados['errors']}")
-                    else:
-                        st.session_state.analisados = []
-                        todos_jogos = dados.get('response', [])
-                        
-                        # --- FILTRO DE LIGAS FAMOSAS ---
-                        # 71=Brasil A, 72=Brasil B, 39=Inglaterra, 140=Espanha, 135=Itália, 78=Alemanha, 61=França, 2=Champions, 13=Libertadores
-                        ligas_famosas = [71, 72, 39, 140, 135, 78, 61, 2, 13]
-                        
-                        # Separa apenas os jogos das ligas grandes
-                        jogos_filtrados = [j for j in todos_jogos if j['league']['id'] in ligas_famosas]
-                        
-                        # Se não tiver nenhum jogo de liga famosa hoje, pega os gerais do dia
-                        if not jogos_filtrados:
-                            jogos_filtrados = todos_jogos
+                    # Filtra apenas os esportes que tem a palavra 'soccer' (futebol)
+                    jogos_futebol = [d for d in dados if 'soccer' in d.get('sport_key', '')]
+                    
+                    # --- FILTRO DE LIGAS FAMOSAS (Formato da The Odds API) ---
+                    ligas_famosas = [
+                        "soccer_brazil_campeonato", "soccer_brazil_serie_b", 
+                        "soccer_epl", "soccer_uefa_champs_league", 
+                        "soccer_spain_la_liga", "soccer_italy_serie_a", 
+                        "soccer_germany_bundesliga", "soccer_conmebol_libertadores",
+                        "soccer_portugal_primeira_liga"
+                    ]
+                    
+                    # Separa apenas os jogos das ligas grandes
+                    jogos_filtrados = [j for j in jogos_futebol if j.get('sport_key') in ligas_famosas]
+                    
+                    # Se não tiver jogo VIP hoje, puxa a lista geral de futebol
+                    if not jogos_filtrados:
+                        jogos_filtrados = jogos_futebol
 
-                        # Pega até 7 jogos (para não estourar seu limite de 100 requisições/dia)
-                        for jogo in jogos_filtrados[:7]:
-                            fix_id = jogo['fixture']['id']
-                            casa = jogo['teams']['home']['name']
-                            fora = jogo['teams']['away']['name']
-                            nome_jogo = f"{casa} x {fora}"
+                    # Pega os 7 próximos jogos
+                    for jogo in jogos_filtrados[:7]:
+                        casa = jogo.get('home_team', 'Casa')
+                        fora = jogo.get('away_team', 'Fora')
+                        nome_jogo = f"{casa} x {fora}"
+                        odd_vitoria = 0.0
+                        
+                        # Extrai a odd real da vitória do time da casa
+                        if jogo.get('bookmakers'):
+                            bookie = jogo['bookmakers'][0] # Pega a primeira casa disponível
+                            if bookie.get('markets'):
+                                mercado = bookie['markets'][0]
+                                for out in mercado.get('outcomes', []):
+                                    if out.get('name') == casa: 
+                                        odd_vitoria = out.get('price', 1.5)
+                                        break
+                                        
+                        if odd_vitoria > 0:
+                            st.session_state.analisados.append({
+                                "jogo": nome_jogo,
+                                "m": f"Vitória {casa}",
+                                "o": round(odd_vitoria, 2),
+                                "conf": random.randint(85, 99)
+                            })
                             
-                            odd_vitoria = 0.0
-                            
-                            # 2. Busca a odd real específica na Bet365 (bookmaker=8)
-                            try:
-                                url_odds = f"https://v3.football.api-sports.io/odds?fixture={fix_id}&bookmaker=8"
-                                res_odds = requests.get(url_odds, headers=headers).json()
-                                
-                                if res_odds.get('response') and len(res_odds['response']) > 0:
-                                    apostas = res_odds['response'][0]['bookmakers'][0]['bets']
-                                    for aposta in apostas:
-                                        if aposta['name'] == 'Match Winner':
-                                            for valor in aposta['values']:
-                                                if valor['value'] == 'Home':
-                                                    odd_vitoria = float(valor['odd'])
-                                                    break
-                            except Exception:
-                                pass # Se der erro de busca na odd, ele apenas pula
-                                
-                            if odd_vitoria > 0:
-                                st.session_state.analisados.append({
-                                    "jogo": nome_jogo,
-                                    "m": f"Vitória {casa}",
-                                    "o": odd_vitoria,
-                                    "conf": random.randint(85, 99)
-                                })
-                                
-                        if not st.session_state.analisados:
-                            st.warning("Nenhum jogo com odds disponíveis encontrado no momento.")
+                    if not st.session_state.analisados:
+                        st.warning("Nenhum jogo com odds disponíveis encontrado no momento.")
                 else:
-                    st.error(f"Código do Erro: {resposta.status_code} | Verifique sua chave.")
+                    st.error(f"Código do Erro: {resposta.status_code} | Detalhes: {resposta.text}")
             except Exception as e:
-                st.error(f"Erro de conexão com a internet: {e}")
+                st.error(f"Erro de conexão: {e}")
 
     # Exibe os jogos (Funciona tanto para o manual quanto para a API)
     for idx, item in enumerate(st.session_state.analisados):
