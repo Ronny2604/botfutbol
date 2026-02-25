@@ -8,16 +8,16 @@ from telegram import Bot
 from datetime import datetime, timedelta
 
 # --- CONFIGURAÇÃO E SEGURANÇA ---
-st.set_page_config(page_title="RonnyP V8 PLATINUM", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="RonnyP V8 SUPREME", layout="wide", initial_sidebar_state="expanded")
 
 MASTER_KEY = "ronnyp@2025"
 FILE_KEYS = "keys.txt" 
 TOKEN = '8543393879:AAEsaXAAq2A19zbmMEfHZb-R7nLL-VdierU'
 CHAT_ID = '-1003799258159'
 LINK_CANAL = "https://t.me/+_4ZgNo3xYFo5M2Ex"
-LINK_SUPORTE = "https://wa.me/5561996193390?text=Olá%20RonnyP,%20gostaria%20de%20adquirir%20minha%20Key%20de%20acesso%20VIP!"
+LINK_SUPORTE = "https://wa.me/5561996193390?text=Olá%20RonnyP"
 
-# --- GERENCIAMENTO DE KEYS COM TEMPO ---
+# --- BANCO DE DADOS DE KEYS ---
 def carregar_keys():
     keys_dict = {}
     if not os.path.exists(FILE_KEYS): return keys_dict
@@ -37,15 +37,12 @@ def salvar_key(nova_key, horas_validade):
         f.write(f"{nova_key},{exp_str}\n")
     return expiracao
 
-# Inicialização de Sessão
+# --- INICIALIZAÇÃO DE SESSÃO ---
 if 'autenticado' not in st.session_state: st.session_state.autenticado = False
+if 'user_nome' not in st.session_state: st.session_state.user_nome = "Investidor"
 if 'bilhete' not in st.session_state: st.session_state.bilhete = []
 if 'analisados' not in st.session_state: st.session_state.analisados = []
-if 'boas_vindas' not in st.session_state: st.session_state.boas_vindas = False
 
-# Verificação de Acesso
-query_params = st.query_params
-url_key = query_params.get("acesso")
 db_keys = carregar_keys()
 
 def valida_chave(chave):
@@ -54,134 +51,137 @@ def valida_chave(chave):
         if datetime.now() < db_keys[chave]: return True, False
     return False, False
 
+# --- LÓGICA DE SALVAMENTO AUTOMÁTICO (COOKIE/URL) ---
+# Tenta pegar a chave salva nos parâmetros da URL
+query_params = st.query_params
+url_key = query_params.get("acesso")
+
 if url_key and not st.session_state.autenticado:
     auth, admin = valida_chave(url_key)
     if auth:
         st.session_state.autenticado = True
         st.session_state.is_admin = admin
 
-# --- ESTILOS ---
+# --- ESTILOS CSS ---
 st.markdown(f"""
     <style>
     .stApp {{ background-color: #040d1a; }}
-    .mobile-title {{ font-size: 1.6rem; color: #00d4ff; text-align: center; font-weight: bold; margin-bottom: 1rem; }}
+    .marquee {{ width: 100%; background: #00d4ff; color: #040d1a; padding: 5px; font-weight: bold; overflow: hidden; }}
+    .marquee p {{ display: inline-block; padding-left: 100%; animation: marquee 25s linear infinite; margin:0; }}
+    @keyframes marquee {{ 0% {{ transform: translate(0, 0); }} 100% {{ transform: translate(-100%, 0); }} }}
+    .auth-container {{ background: #0a1626; padding: 30px; border-radius: 20px; border: 2px solid #00d4ff; text-align: center; margin: auto; max-width: 400px; }}
     .mobile-card {{ background: #0a1626; border: 1px solid #1a2a3a; border-radius: 12px; padding: 15px; margin-bottom: 12px; }}
-    .market-box {{ background: #132338; padding: 12px; border-radius: 8px; border-left: 4px solid #00d4ff; margin: 10px 0; }}
-    .btn-casa {{ background: linear-gradient(90deg, #0052ff, #00d4ff); color: white !important; padding: 10px; border-radius: 8px; display: block; text-align: center; font-weight: bold; margin-bottom: 10px; text-decoration: none; }}
-    .btn-canal {{ background: #0088cc; color: white !important; padding: 12px; border-radius: 10px; display: block; text-align: center; font-weight: bold; margin-bottom: 15px; text-decoration: none; }}
-    .stButton>button {{ height: 3rem; border-radius: 10px !important; background: #00d4ff !important; color: #040d1a !important; font-weight: bold !important; width: 100%; }}
+    .stButton>button {{ height: 3.5rem; border-radius: 12px !important; background: #00d4ff !important; color: #040d1a !important; font-weight: bold !important; width: 100%; }}
+    .btn-casa {{ background: linear-gradient(90deg, #0052ff, #00d4ff); color: white !important; padding: 12px; border-radius: 8px; display: block; text-align: center; font-weight: bold; text-decoration: none; margin-bottom: 10px; }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- TELA DE ACESSO ---
+# Letreiro Social Proof
+Nomes_Ficticios = ["Marcos Silva", "Ricardo_Trader", "Ana Paula", "Lucas Tips", "Felipe G.", "BetMaster", "Jonny", "Adriano V.", "Sérgio A.", "BancaForte"]
+msg_marquee = "  •  ".join([f"🔥 {n} ACABOU DE ENTRAR" for n in Nomes_Ficticios])
+st.markdown(f"<div class='marquee'><p>{msg_marquee} • {msg_marquee}</p></div>", unsafe_allow_html=True)
+
+# --- TELA DE LOGIN ---
 if not st.session_state.autenticado:
-    st.markdown("<div class='mobile-title'>👑 RONNYP VIP V8</div>", unsafe_allow_html=True)
-    st.markdown("<div style='background: #0a1626; padding: 25px; border-radius: 15px; border: 2px solid #00d4ff; text-align: center;'>", unsafe_allow_html=True)
-    st.subheader("🔐 ACESSO RESTRITO")
-    key_input = st.text_input("Sua KEY:", type="password")
-    if st.button("LIBERAR"):
-        auth, admin = valida_chave(key_input)
-        if auth:
-            st.session_state.autenticado = True
-            st.session_state.is_admin = admin
-            st.rerun()
-        else: st.error("Chave inválida ou expirada!")
-    st.markdown(f'<a href="{LINK_SUPORTE}" style="background:#25d366; color:white; padding:12px; display:block; border-radius:10px; text-decoration:none; font-weight:bold; margin-top:15px;">💬 ADQUIRIR KEY</a>', unsafe_allow_html=True)
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("<div class='auth-container'>", unsafe_allow_html=True)
+    st.image("https://cdn-icons-png.flaticon.com/512/5971/5971593.png", width=80)
+    st.title("RONNYP VIP V8")
+    
+    nome_input = st.text_input("Seu Nome:")
+    key_input = st.text_input("Sua Key:", type="password")
+    lembrar = st.checkbox("Lembrar meu acesso neste dispositivo", value=True)
+    
+    if st.button("ACESSAR PLATAFORMA"):
+        if key_input:
+            auth, admin = valida_chave(key_input)
+            if auth:
+                st.session_state.autenticado = True
+                st.session_state.is_admin = admin
+                st.session_state.user_nome = nome_input if nome_input else "Investidor"
+                
+                if lembrar:
+                    # Salva a key na URL para o navegador "lembrar" na próxima vez
+                    st.query_params["acesso"] = key_input
+                st.rerun()
+            else: st.error("Key inválida!")
+        else: st.warning("Digite sua Key!")
+    
+    st.markdown(f'<a href="{LINK_SUPORTE}" style="color:#00d4ff; text-decoration:none; font-size:12px;">Comprar Acesso VIP</a>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- MENSAGEM DE BOAS-VINDAS ---
-if not st.session_state.boas_vindas:
-    st.balloons()
-    st.toast("🚀 IA RonnyP V8 Conectada!", icon="💰")
-    st.session_state.boas_vindas = True
-
 # --- MENU LATERAL ---
 with st.sidebar:
-    st.markdown(f"### 🟢 STATUS: {'ADMIN' if st.session_state.is_admin else 'VIP'}")
-    
-    st.markdown(f'<a href="{LINK_CANAL}" target="_blank" class="btn-canal">📢 ENTRAR NO CANAL</a>', unsafe_allow_html=True)
-    
-    if st.session_state.is_admin:
-        st.header("🎫 GERAR ACESSO")
-        nome = st.text_input("Nome do Cliente (Sem espaços)")
-        tempo = st.selectbox("Validade", ["0.5 (Teste 30min)", "24 (1 Dia)", "720 (30 Dias)"])
-        if st.button("GERAR LINK"):
-            if nome:
-                exp_date = salvar_key(nome, float(tempo))
-                link = f"https://botoverpy-gnwcseepyzojlaz7ci6g97.streamlit.app/?acesso={nome}"
-                st.success(f"Até: {exp_date.strftime('%d/%m %H:%M')}")
-                st.code(link)
+    st.markdown(f"### 👋 Olá, {st.session_state.user_nome}!")
+    st.markdown(f'<a href="{LINK_CANAL}" target="_blank" class="btn-casa" style="background:#0088cc;">📢 CANAL TELEGRAM</a>', unsafe_allow_html=True)
     
     st.markdown("---")
-    st.markdown("### 🏦 CASAS SUGERIDAS")
-    st.markdown(f'<a href="https://esportiva.bet.br?ref=511e1f11699f" target="_blank" class="btn-casa">🎰 ESPORTIVA BET</a>', unsafe_allow_html=True)
-    st.markdown(f'<a href="{LINK_SUPORTE}" class="btn-casa" style="background:#25d366;">🛠️ SUPORTE</a>', unsafe_allow_html=True)
+    st.subheader("📊 GESTÃO DE BANCA")
+    banca = st.number_input("Sua Banca (R$)", min_value=10.0, value=100.0)
+    perfil = st.select_slider("Risco", options=["Baixo", "Médio", "Alto"])
+    val_aposta = banca * (0.01 if perfil=="Baixo" else 0.03 if perfil=="Médio" else 0.05)
+    st.info(f"💰 Aposte: **R$ {val_aposta:.2f}**")
     
-    if st.button("SAIR"):
+    if st.session_state.is_admin:
+        st.markdown("---")
+        st.header("🎫 ADMIN")
+        c_nome = st.text_input("Nome Cliente")
+        c_tempo = st.selectbox("Validade (Horas)", [0.5, 24, 720])
+        if st.button("GERAR"):
+            salvar_key(c_nome, float(c_tempo))
+            link_final = f"https://botoverpy-gnwcseepyzojlaz7ci6g97.streamlit.app/?acesso={c_nome}"
+            st.code(link_final)
+
+    if st.button("SAIR E LIMPAR SALVAMENTO"):
+        st.query_params.clear()
         st.session_state.autenticado = False
         st.rerun()
 
-# --- APP ---
-st.markdown("<div class='mobile-title'>RONNYP VIP V8 PLATINUM</div>", unsafe_allow_html=True)
-tab1, tab2, tab3 = st.tabs(["📡 RADAR IA", "📋 BILHETE", "✅ GREEN"])
+# --- CONTEÚDO PRINCIPAL (RADAR / BILHETE) ---
+st.title("📡 RADAR V8 PLATINUM")
+tab1, tab2 = st.tabs(["🚀 SCANNER IA", "📋 BILHETE PRO"])
 
-def get_analysis(jogo):
-    times = jogo.split(' x ')
-    t1 = times[0].strip()
-    exp = (datetime.now() + timedelta(minutes=random.randint(6, 12))).strftime("%H:%M")
-    res = random.choice([{"m": f"Vitória: {t1}", "o": 1.62}, {"m": "Ambas Marcam", "o": 1.80}, {"m": "Over 1.5 Gols", "o": 1.40}])
-    return {**res, "conf": random.randint(88,99), "expira": exp, "jogo": jogo, "fav": t1}
+def get_analysis(j):
+    t1 = j.split(' x ')[0].strip()
+    return {"m": f"Vitória: {t1}", "o": 1.65, "conf": random.randint(90,99), "expira": (datetime.now()+timedelta(minutes=10)).strftime("%H:%M"), "jogo": j, "fav": t1}
 
 with tab1:
-    grade = st.text_area("COLE A GRADE", height=80, placeholder="Time A x Time B")
-    col_a, col_b = st.columns(2)
-    with col_a:
-        if st.button("🚀 INICIAR VARREDURA"):
-            if grade:
-                with st.spinner("IA ESCANEANDO..."): time.sleep(1.5)
-                jogos = [l.strip() for l in grade.split('\n') if 'x' in l.lower()]
-                st.session_state.analisados = [get_analysis(j) for j in jogos]
-    with col_b:
-        if st.button("🧹 LIMPAR GRADE"):
-            st.session_state.analisados = []
-            st.rerun()
+    grade = st.text_area("COLE A GRADE", height=80)
+    col1, col2 = st.columns(2)
+    if col1.button("VARREDURA"):
+        if grade:
+            with st.spinner("IA ANALISANDO..."): time.sleep(1.5)
+            st.session_state.analisados = [get_analysis(j) for j in grade.split('\n') if 'x' in j.lower()]
+    if col2.button("LIMPAR"):
+        st.session_state.analisados = []
+        st.rerun()
 
     for idx, item in enumerate(st.session_state.analisados):
         st.markdown(f"""<div class='mobile-card'>
-            <span style='background:#ff4b4b; color:white; padding:2px 8px; border-radius:5px; font-size:10px; float:right;'>⏳ {item['expira']}</span>
-            <div style='color:#00ff00; font-size:11px; font-weight:bold;'>⭐ FAV: {item['fav']}</div>
-            <div style='color:white; font-weight:bold;'>{item['jogo']}</div>
-            <div class='market-box'><span style='color:white;'>{item['m']}</span><span style='float:right; color:#00d4ff; font-weight:bold;'>@{item['o']}</span></div>
+            <div style='color:#00ff00; font-size:12px; font-weight:bold;'>⭐ CONF: {item['conf']}% | ⏳ {item['expira']}</div>
+            <div style='color:white; font-size:16px; font-weight:bold;'>{item['jogo']}</div>
+            <div style='background:#132338; padding:10px; margin-top:8px; border-radius:5px;'>
+                <span style='color:white;'>{item['m']}</span><span style='float:right; color:#00d4ff;'>@{item['o']}</span>
+            </div>
         </div>""", unsafe_allow_html=True)
-        if st.button(f"ADICIONAR {idx+1}", key=f"add_{idx}"):
+        if st.button(f"ADD {idx+1}", key=f"add_{idx}"):
             st.session_state.bilhete.append(item)
-            st.toast("✅ No Bilhete!")
+            st.toast("✅ Adicionado!")
 
 with tab2:
     if st.session_state.bilhete:
         odd_t = 1.0
-        resumo_tg = "👑 *RONNYP VIP V8* 👑\n\n"
+        resumo = f"👑 *RONNYP VIP V8* 👑\n👤 Analista: {st.session_state.user_nome}\n\n"
         for b in st.session_state.bilhete:
             odd_t *= b['o']
             st.write(f"🔹 **{b['jogo']}** (@{b['o']})")
-            resumo_tg += f"🏟️ *{b['jogo']}*\n🎯 {b['m']} (@{b['o']})\n\n"
-        st.markdown(f"### 📈 ODD TOTAL: {odd_t:.2f}")
-        
-        if st.button("📤 DISPARAR NO CANAL"):
-            msg_final = resumo_tg + f"📊 *Odd: {odd_t:.2f}*\n\n🎰 [APOSTE AQUI](https://esportiva.bet.br?ref=511e1f11699f)\n📢 [ENTRE NO CANAL]({LINK_CANAL})"
-            asyncio.run(Bot(TOKEN).send_message(CHAT_ID, msg_final, parse_mode='Markdown', disable_web_page_preview=True))
+            resumo += f"🏟️ *{b['jogo']}*\n🎯 {b['m']} (@{b['o']})\n\n"
+        st.write(f"### ODD FINAL: {odd_t:.2f}")
+        if st.button("📤 DISPARAR TELEGRAM"):
+            asyncio.run(Bot(TOKEN).send_message(CHAT_ID, resumo + f"📊 *Odd Total: {odd_t:.2f}*", parse_mode='Markdown'))
             st.success("Sinal enviado!")
-        
-        wpp_link = urllib.parse.quote(resumo_tg.replace("*","") + f"Odd: {odd_t:.2f}\nCanal: {LINK_CANAL}")
-        st.markdown(f'<a href="https://wa.me/?text={wpp_link}" target="_blank" style="background:#25d366; color:white; padding:15px; border-radius:10px; display:block; text-align:center; text-decoration:none; font-weight:bold; margin-top:10px;">📲 WHATSAPP</a>', unsafe_allow_html=True)
-        
         if st.button("🗑️ LIMPAR BILHETE"):
             st.session_state.bilhete = []
             st.rerun()
-    else: st.info("Vazio.")
-
-with tab3:
-    if st.button("✅ NOTIFICAR GREEN"):
-        asyncio.run(Bot(TOKEN).send_message(CHAT_ID, f"✅✅✅ GREEN! ✅✅✅\n\n📢 {LINK_CANAL}"))
-        st.balloons()
+    else: st.info("Selecione jogos no Scanner.")
