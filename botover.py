@@ -151,8 +151,9 @@ with st.sidebar:
         st.session_state.autenticado = False
         st.rerun()
 
-# --- 8. RADAR ---
-t1, t2 = st.tabs(["🚀 SCANNER IA", "📋 BILHETE"])
+# --- 8. RADAR E SISTEMA PREMIUM ---
+# ADICIONAMOS A TERCEIRA ABA (HISTÓRICO VIP)
+t1, t2, t3 = st.tabs(["🚀 SCANNER IA", "📋 BILHETE", "🏆 HISTÓRICO VIP"])
 
 LIGAS_DISPONIVEIS = {
     "🇬🇧 Premier League (Inglaterra)": "soccer_epl",
@@ -228,103 +229,18 @@ with t1:
                         except: pass
                         
                         nome_jogo = f"🕒 {hora_jogo} | {casa} x {fora}"
-                        
-                        # --- ANÁLISE PROFUNDA DE MERCADOS DIVERSIFICADOS ---
                         mercados_encontrados = []
                         
-                        # Varre TODAS as casas disponíveis para não perder nenhum mercado
                         if jogo.get('bookmakers'):
                             for bookie in jogo['bookmakers']:
                                 for mercado in bookie.get('markets', []):
-                                    # Pega Vitória e Empate
                                     if mercado['key'] == 'h2h':
                                         for out in mercado['outcomes']:
                                             if out['name'] == casa: mercados_encontrados.append({"m": f"Vitória {casa}", "o": out['price']})
                                             elif out['name'] == fora: mercados_encontrados.append({"m": f"Vitória {fora}", "o": out['price']})
                                             elif out['name'].lower() == 'draw': mercados_encontrados.append({"m": "Empate", "o": out['price']})
-                                    
-                                    # Pega mercado de Gols (Over / Under)
                                     elif mercado['key'] == 'totals':
                                         for out in mercado['outcomes']:
                                             pt = out.get('point', 0)
                                             if out['name'] == 'Over':
-                                                mercados_encontrados.append({"m": f"Over {pt} Gols", "o": out['price']})
-                                            elif out['name'] == 'Under':
-                                                mercados_encontrados.append({"m": f"Under {pt} Gols", "o": out['price']})
-
-                        # Remove duplicadas (pega só uma opção de cada mercado)
-                        mercados_unicos = {}
-                        for m in mercados_encontrados:
-                            if m['m'] not in mercados_unicos:
-                                mercados_unicos[m['m']] = m
-                                
-                        lista_mercados = list(mercados_unicos.values())
-
-                        # O Bot agora diversifica e escolhe um mercado aleatório e seguro (Odds entre 1.30 e 2.40)
-                        melhor_aposta = None
-                        if lista_mercados:
-                            apostas_validas = [ap for ap in lista_mercados if 1.30 <= ap['o'] <= 2.40]
-                            if apostas_validas:
-                                melhor_aposta = random.choice(apostas_validas)
-                            else:
-                                melhor_aposta = random.choice(lista_mercados) # Se não tiver nada seguro, pega aleatório
-                        
-                        if melhor_aposta:
-                            st.session_state.analisados.append({
-                                "jogo": nome_jogo,
-                                "m": melhor_aposta["m"],
-                                "o": round(melhor_aposta["o"], 2),
-                                "conf": random.randint(85, 99)
-                            })
-                            
-                    if not st.session_state.analisados:
-                        st.warning(f"Nenhum jogo previsto para HOJE na {liga_selecionada}.")
-                    else:
-                        status.update(label="Varredura concluída com sucesso!", state="complete", expanded=False)
-                else:
-                    st.error(f"Erro {resposta.status_code}: {resposta.text}")
-                    status.update(label="Erro na busca.", state="error")
-            except Exception as e:
-                st.error(f"Erro de conexão: {e}")
-                status.update(label="Erro de Conexão.", state="error")
-
-    # Exibe os jogos
-    for idx, item in enumerate(st.session_state.analisados):
-        st.markdown(f"""<div style='background:#0a1626; padding:15px; border-radius:12px; border-left: 5px solid {cor_neon}; margin-bottom:10px;'>
-            <div style='color:{cor_neon}; font-weight:bold; font-size:12px;'>🔥 ASSERTIVIDADE IA: {item['conf']}%</div>
-            <div style='font-size:18px; font-weight:bold; color:white;'>{item['jogo']}</div>
-            <div style='margin-top:8px; color:#bbb;'>🎯 Mercado: <b>{item['m']}</b> | <span style='color:{cor_neon};'>@{item['o']}</span></div>
-        </div>""", unsafe_allow_html=True)
-        if st.button(f"ADICIONAR JOGO {idx+1}", key=f"btn_{idx}"):
-            st.session_state.bilhete.append(item)
-            st.toast("✅ Adicionado!")
-
-with t2:
-    if st.session_state.bilhete:
-        odd_f = 1.0
-        msg_tg = f"👑 *RONNYP VIP V8* 👑\n\n"
-        msg_whats = "👑 *RONNYP VIP V8* 👑\n\n"
-        
-        for b in st.session_state.bilhete:
-            odd_f *= b['o']
-            st.write(f"✅ {b['jogo']} (@{b['o']})")
-            msg_tg += f"🏟️ *{b['jogo']}*\n🎯 {b['m']} (@{b['o']})\n\n"
-            msg_whats += f"🏟️ {b['jogo']}\n🎯 {b['m']} (@{b['o']})\n\n"
-        
-        st.markdown(f"### ODD TOTAL: {odd_f:.2f}")
-        
-        if st.button("ENVIAR PRO TELEGRAM"):
-            final_msg_tg = msg_tg + f"📊 *Odd Total: {odd_f:.2f}*\n\n🎰 [APOSTE AQUI]({LINK_CASA_1})"
-            asyncio.run(Bot(TOKEN).send_message(CHAT_ID, final_msg_tg, parse_mode='Markdown'))
-            st.success("Sinal enviado para o Telegram!")
-            
-        final_msg_whats = msg_whats + f"📊 *Odd Total: {odd_f:.2f}*\n\n🎰 APOSTE AQUI: {LINK_CASA_1}"
-        texto_codificado = urllib.parse.quote(final_msg_whats)
-        link_zap = f"https://api.whatsapp.com/send?text={texto_codificado}"
-        st.link_button("🟢 COMPARTILHAR NO WHATSAPP", link_zap)
-
-        if st.button("RESETAR"):
-            st.session_state.bilhete = []
-            st.rerun()
-    else:
-        st.info("Nenhum jogo selecionado.")
+                                                mercados_encontrados.append({"m": f"Over {pt
