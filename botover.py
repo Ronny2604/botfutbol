@@ -58,54 +58,59 @@ is_fem = st.session_state.user_genero == "Feminino"
 cor_neon = "#ff00ff" if is_fem else "#00ff00"
 bg_marquee = "#1a001a" if is_fem else "#00120a"
 
-# --- 4. CSS BLINDADO (REMOÇÃO TOTAL DE RODAPÉ E MENU NATIVO) ---
+# --- 4. CSS SUPREME (REMOÇÃO DE LIXO E BOTÃO DE MENU) ---
 st.markdown(f"""
     <style>
-    /* REMOVE RODAPÉ, MENU E ÍCONES DO GITHUB */
+    /* REMOVE RODAPÉ E MENU NATIVO */
     #MainMenu {{visibility: hidden !important;}}
     footer {{visibility: hidden !important;}}
     header {{visibility: hidden !important;}}
     .stDeployButton {{display:none !important;}}
-    [data-testid="stStatusWidget"] {{visibility: hidden !important;}}
     
-    /* REMOVE ESPAÇAMENTO DO TOPO */
-    .block-container {{padding-top: 1rem !important;}}
+    /* ESTILO DO BOTÃO DE MENU PARA CELULAR */
+    [data-testid="stSidebarCollapsedControl"] {{
+        background-color: {cor_neon} !important;
+        color: #000 !important;
+        border-radius: 50% !important;
+        width: 50px !important;
+        height: 50px !important;
+        top: 15px !important;
+        left: 15px !important;
+        box-shadow: 0 0 15px {cor_neon};
+    }}
 
     .stApp {{ background-color: #040d1a; }}
     
-    /* Header Nome de Destaque */
     .header-destaque {{
         text-align: center;
         padding: 15px;
         color: {cor_neon};
-        font-size: 30px;
+        font-size: 28px;
         font-weight: bold;
         text-shadow: 0 0 15px {cor_neon};
         border-bottom: 2px solid {cor_neon}33;
-        margin-bottom: 10px;
     }}
 
     /* Letreiro */
     .marquee-wrapper {{
         width: 100%; overflow: hidden; background: {bg_marquee};
         border-bottom: 2px solid {cor_neon}; padding: 10px 0; display: flex;
-        box-shadow: 0 0 15px {cor_neon}55; margin-bottom: 15px;
+        margin-bottom: 15px;
     }}
     .marquee-content {{ display: flex; white-space: nowrap; animation: marquee 30s linear infinite; }}
     .marquee-item {{ padding: 0 40px; color: {cor_neon}; font-weight: bold; text-shadow: 0 0 5px {cor_neon}; }}
     @keyframes marquee {{ 0% {{ transform: translateX(0); }} 100% {{ transform: translateX(-50%); }} }}
 
-    /* Botões Laterais */
     .btn-side {{
         display: block; padding: 12px; margin-bottom: 10px;
         text-align: center; border-radius: 8px; font-weight: bold;
         text-decoration: none; color: white !important; font-size: 14px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.2);
     }}
 
-    /* Botões Gerais */
     .stButton>button {{ 
         background: {cor_neon} !important; color: #040d1a !important; font-weight: bold !important; 
-        border-radius: 10px !important; border: none !important; width: 100%; height: 3rem;
+        border-radius: 10px !important; border: none !important; width: 100%;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -113,117 +118,111 @@ st.markdown(f"""
 # --- 5. TELA DE LOGIN ---
 if not st.session_state.autenticado:
     st.markdown(f"<div class='header-destaque'>RONNYP V8 SUPREME</div>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
     with st.container():
-        st.markdown("<div style='max-width:400px; margin:auto; padding:25px; background:#0a1626; border-radius:20px; border: 1px solid #1a2a3a; box-shadow: 0 0 20px rgba(0,0,0,0.5);'>", unsafe_allow_html=True)
-        st.markdown(f"<h3 style='text-align:center; color:{cor_neon};'>ENTRAR NO SISTEMA</h3>", unsafe_allow_html=True)
+        st.markdown("<div style='max-width:400px; margin:auto; padding:25px; background:#0a1626; border-radius:20px; border: 1px solid #1a2a3a;'>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='text-align:center; color:{cor_neon};'>ACESSO VIP</h3>", unsafe_allow_html=True)
         nome_in = st.text_input("Seu Nome:")
         genero_in = st.selectbox("Gênero:", ["Masculino", "Feminino"])
-        key_in = st.text_input("Sua Key VIP:", type="password")
+        key_in = st.text_input("Sua Key:", type="password")
         
-        if st.button("LIBERAR ACESSO"):
+        if st.button("ACESSAR RADAR"):
             if key_in:
                 auth, admin = valida_chave(key_in)
                 if auth:
                     st.session_state.autenticado = True
                     st.session_state.is_admin = admin
-                    st.session_state.user_nome = nome_in if nome_in else "Trader VIP"
+                    st.session_state.user_nome = nome_in if nome_in else "VIP"
                     st.session_state.user_genero = genero_in
                     st.session_state.show_welcome = True
                     st.rerun()
-                else: st.error("❌ Key Inválida ou Expirada!")
+                else: st.error("Key Inválida!")
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
 # --- 6. CONTEÚDO LOGADO ---
 
-# Header fixo
 st.markdown(f"<div class='header-destaque'>RONNYP V8 SUPREME</div>", unsafe_allow_html=True)
 
-# Letreiro Social Proof
-itens_marquee = "".join([f"<div class='marquee-item'> 🔥 {n} ACABOU DE ENTRAR </div>" for n in ["Marcos", "Ana", "Lucas", "Julia", "Tadeu", "Carla", "Ricardo", "Fabiana"]])
+# Letreiro
+itens_marquee = "".join([f"<div class='marquee-item'> 🔥 {n} ENTROU NO VIP </div>" for n in ["Marcos", "Ana", "Lucas", "Julia", "Tadeu", "Carla"]])
 st.markdown(f"<div class='marquee-wrapper'><div class='marquee-content'>{itens_marquee}{itens_marquee}</div></div>", unsafe_allow_html=True)
 
 if st.session_state.show_welcome:
-    st.toast(f"Bem-vindo(a), {st.session_state.user_nome}! 💰", icon="✅")
+    st.toast(f"Bem-vindo(a), {st.session_state.user_nome}! 💰")
     st.balloons()
     st.session_state.show_welcome = False
 
-# --- 7. MENU LATERAL (RESTAURADO) ---
+# --- 7. MENU LATERAL (CONFIGURADO COM LINKS) ---
 with st.sidebar:
-    st.markdown(f"<h2 style='color:{cor_neon}; text-align:center; text-shadow: 0 0 10px {cor_neon};'>RONNYP V8</h2>", unsafe_allow_html=True)
-    st.markdown(f"<p style='text-align:center;'>👤 <b>Analista:</b> {st.session_state.user_nome}</p>", unsafe_allow_html=True)
+    st.markdown(f"<h1 style='color:{cor_neon}; text-align:center;'>V8 SUPREME</h1>", unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align:center;'>👤 <b>{st.session_state.user_nome}</b></p>", unsafe_allow_html=True)
     st.markdown("---")
     
-    st.subheader("🔗 LINKS ÚTEIS")
+    st.subheader("🔗 ACESSOS RÁPIDOS")
     st.markdown(f'<a href="{LINK_CASA_1}" target="_blank" class="btn-side" style="background: #e6b800; color: #000 !important;">🎰 CASA RECOMENDADA</a>', unsafe_allow_html=True)
     st.markdown(f'<a href="{LINK_SUPORTE}" target="_blank" class="btn-side" style="background: #25d366;">🟢 SUPORTE WHATSAPP</a>', unsafe_allow_html=True)
     st.markdown(f'<a href="{LINK_CANAL}" target="_blank" class="btn-side" style="background: #0088cc;">🔵 CANAL TELEGRAM</a>', unsafe_allow_html=True)
     
     st.markdown("---")
-    st.subheader("📊 GESTÃO DE BANCA")
-    banca = st.number_input("Sua Banca R$", value=100.0, step=10.0)
-    st.info(f"💰 Entrada (3%): R$ {banca * 0.03:.2f}")
+    st.subheader("📊 GESTÃO")
+    banca = st.number_input("Banca R$", value=100.0)
+    st.info(f"💰 Entrada: R$ {banca * 0.03:.2f}")
 
     if st.session_state.is_admin:
         st.markdown("---")
-        st.subheader("🎫 GERAR KEY ADMIN")
-        c_nome = st.text_input("Chave para Cliente")
-        if st.button("CRIAR KEY"):
+        st.subheader("🎫 ADMIN")
+        c_nome = st.text_input("Gerar Key")
+        if st.button("CRIAR"):
             salvar_key(c_nome, 24)
-            st.success("Gerada com sucesso!")
             st.code(c_nome)
 
-    st.markdown("<br>"*5, unsafe_allow_html=True)
-    if st.button("DESLOGAR"):
+    st.markdown("<br>"*3, unsafe_allow_html=True)
+    if st.button("SAIR"):
         st.session_state.autenticado = False
         st.rerun()
 
 # --- 8. RADAR ---
-t1, t2 = st.tabs(["🚀 SCANNER IA", "📋 MEU BILHETE"])
+t1, t2 = st.tabs(["🚀 SCANNER IA", "📋 BILHETE"])
 
 with t1:
-    grade = st.text_area("COLE A GRADE DE JOGOS", height=100, placeholder="Time A x Time B\nTime C x Time D")
-    if st.button("ANALISAR AGORA"):
+    grade = st.text_area("COLE A GRADE", height=100)
+    if st.button("VARREDURA V8"):
         if grade:
             jogos = [j for j in grade.split('\n') if 'x' in j.lower()]
             st.session_state.analisados = []
-            mercados = ["Ambas Marcam", "Mais de 1.5 Gols", "Vitória Direta", "Escanteios +8.5", "Mais de 2.5 Gols"]
+            mercados = ["Ambas Marcam", "Over 1.5 Gols", "Vitória", "Cantos +8.5"]
             for j in jogos:
                 st.session_state.analisados.append({
-                    "jogo": j, 
-                    "m": random.choice(mercados), 
-                    "o": round(random.uniform(1.5, 2.3), 2), 
-                    "conf": random.randint(93,99)
+                    "jogo": j, "m": random.choice(mercados), "o": round(random.uniform(1.5, 2.3), 2), "conf": random.randint(93,99)
                 })
 
     for idx, item in enumerate(st.session_state.analisados):
-        st.markdown(f"""<div style='background:#0a1626; padding:15px; border-radius:12px; border-left: 5px solid {cor_neon}; margin-bottom:10px; box-shadow: 0 4px 6px rgba(0,0,0,0.3);'>
+        st.markdown(f"""<div style='background:#0a1626; padding:15px; border-radius:12px; border-left: 5px solid {cor_neon}; margin-bottom:10px;'>
             <div style='color:{cor_neon}; font-weight:bold; font-size:12px;'>🔥 ASSERTIVIDADE: {item['conf']}%</div>
             <div style='font-size:18px; font-weight:bold; color:white;'>{item['jogo']}</div>
-            <div style='margin-top:8px; color:#bbb;'>🎯 Mercado: <b>{item['m']}</b> | <span style='color:{cor_neon}; font-size:18px;'>@{item['o']}</span></div>
+            <div style='margin-top:8px;'>🎯 {item['m']} | <span style='color:{cor_neon};'>@{item['o']}</span></div>
         </div>""", unsafe_allow_html=True)
         if st.button(f"ADICIONAR JOGO {idx+1}", key=f"btn_{idx}"):
             st.session_state.bilhete.append(item)
-            st.toast("✅ Jogo adicionado ao bilhete!")
+            st.toast("✅ Adicionado!")
 
 with t2:
     if st.session_state.bilhete:
         odd_f = 1.0
-        msg_resumo = f"👑 *RONNYP VIP V8* 👑\n👤 Analista: {st.session_state.user_nome}\n\n"
+        msg_tg = f"👑 *RONNYP VIP V8* 👑\n\n"
         for b in st.session_state.bilhete:
             odd_f *= b['o']
-            st.markdown(f"<div style='background:#0d1f14; padding:10px; border-radius:8px; margin-bottom:5px; border:1px solid {cor_neon}44;'>✅ {b['jogo']} (@{b['o']})</div>", unsafe_allow_html=True)
-            msg_resumo += f"🏟️ *{b['jogo']}*\n🎯 {b['m']} (@{b['o']})\n\n"
+            st.write(f"✅ {b['jogo']} (@{b['o']})")
+            msg_tg += f"🏟️ *{b['jogo']}*\n🎯 {b['m']} (@{b['o']})\n\n"
         
-        st.markdown(f"### 📈 ODD FINAL: <span style='color:{cor_neon};'>{odd_f:.2f}</span>", unsafe_allow_html=True)
-        
-        if st.button("📤 DISPARAR SINAL NO CANAL"):
-            final_msg = msg_resumo + f"📊 *Odd Total: {odd_f:.2f}*\n\n🎰 [APOSTE AQUI]({LINK_CASA_1})"
+        st.markdown(f"### ODD TOTAL: {odd_f:.2f}")
+        if st.button("DISPARAR NO TELEGRAM"):
+            final_msg = msg_tg + f"📊 *Odd: {odd_f:.2f}*\n\n🎰 [APOSTE AQUI]({LINK_CASA_1})"
             asyncio.run(Bot(TOKEN).send_message(CHAT_ID, final_msg, parse_mode='Markdown'))
-            st.success("Sinal enviado com sucesso!")
-        
-        if st.button("🗑️ LIMPAR BILHETE"):
+            st.success("Enviado!")
+        if st.button("RESETAR BILHETE"):
             st.session_state.bilhete = []
             st.rerun()
-    else: 
-        st.info("O seu bilhete de apostas está vazio. Use o Scanner para buscar as melhores oportunidades!")
+    else:
+        st.info("Scanner vazio.")
