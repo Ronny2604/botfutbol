@@ -2,118 +2,124 @@ import streamlit as st
 import asyncio
 import random
 import io
-import time
+import urllib.parse
 from PIL import Image, ImageDraw, ImageFont
 from telegram import Bot
 
-# 1. CONFIGURAÇÃO MOBILE-FIRST (ESTILO APP)
-st.set_page_config(page_title="RonnyP V8 MOBILE", layout="wide", initial_sidebar_state="collapsed")
+# 1. CONFIGURAÇÃO MOBILE-FIRST "BLUE PREMIUM"
+st.set_page_config(page_title="RonnyP V8 BLUE", layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
     <style>
-    /* Reset para Mobile */
     .block-container { padding-top: 1rem; padding-bottom: 1rem; padding-left: 0.5rem; padding-right: 0.5rem; }
     
-    .stApp { background-color: #050706; }
+    /* Paleta de Cores Blue Premium */
+    .stApp { background-color: #040d1a; }
     
-    /* Título Mobile */
     .mobile-title {
-        font-size: 1.5rem;
-        color: #00ff00;
+        font-size: 1.4rem;
+        color: #00d4ff;
         text-align: center;
         font-weight: bold;
-        text-transform: uppercase;
         margin-bottom: 1rem;
-        border-bottom: 2px solid #00ff00;
-        padding-bottom: 5px;
+        border-bottom: 1px solid #1a2a3a;
+        padding-bottom: 10px;
     }
 
-    /* Cards de Jogo Estilo Mobile */
     .mobile-card {
-        background: #111;
-        border: 1px solid #222;
-        border-radius: 10px;
+        background: #0a1626;
+        border: 1px solid #1a2a3a;
+        border-radius: 12px;
         padding: 15px;
-        margin-bottom: 10px;
+        margin-bottom: 12px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
     }
     
-    .game-header { color: #fff; font-size: 1rem; font-weight: bold; margin-bottom: 5px; }
-    .fav-tag { color: #00ff00; font-size: 0.8rem; text-transform: uppercase; }
-    .market-box { background: #1a1a1a; padding: 10px; border-radius: 5px; border-left: 4px solid #00ff00; margin: 10px 0; }
-    .odd-badge { background: #00ff00; color: #000; padding: 2px 8px; border-radius: 5px; font-weight: bold; float: right; }
+    .game-header { color: #ffffff; font-size: 1rem; font-weight: bold; }
+    .fav-tag { color: #00d4ff; font-size: 0.75rem; font-weight: bold; }
+    .market-box { background: #132338; padding: 12px; border-radius: 8px; border-left: 4px solid #00d4ff; margin: 10px 0; }
+    .odd-badge { background: #00d4ff; color: #040d1a; padding: 3px 10px; border-radius: 6px; font-weight: bold; float: right; }
 
-    /* Botões Grandes para o Polegar */
+    /* Botões Mobile */
     .stButton>button {
         height: 3.5rem;
-        font-size: 1rem !important;
-        font-weight: bold !important;
         border-radius: 12px !important;
-        background: #111 !important;
-        border: 1px solid #00ff00 !important;
-        color: #00ff00 !important;
+        background: #00d4ff !important;
+        color: #040d1a !important;
+        font-weight: bold !important;
+        border: none !important;
         width: 100%;
     }
     
-    /* Input de Texto Otimizado */
-    .stTextArea textarea { background-color: #111 !important; color: white !important; border: 1px solid #333 !important; }
+    /* Botão WhatsApp */
+    .btn-wpp {
+        background-color: #25d366;
+        color: white !important;
+        padding: 15px;
+        text-decoration: none;
+        border-radius: 12px;
+        font-weight: bold;
+        display: block;
+        text-align: center;
+        margin-top: 10px;
+        font-size: 1rem;
+    }
     
-    /* Esconder menu Streamlit para parecer App */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
+    .stTabs [data-baseweb="tab-list"] { background-color: #040d1a; border-radius: 10px; }
+    .stTabs [data-baseweb="tab"] { color: #fff; }
+    .stTabs [aria-selected="true"] { color: #00d4ff !important; border-bottom-color: #00d4ff !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. LOGICA DE IA (DIVERSIFICADA)
+# 2. IA DE ANÁLISE DIVERSIFICADA
 def get_ia_analysis(jogo, est):
     times = jogo.split(' x ')
     t1 = times[0].strip()
-    t2 = times[1].strip() if len(times) > 1 else "Visitante"
     
-    # Pool de mercados ultra variados
-    pool = [
-        {"m": f"Vitória: {t1}", "o": 1.55, "fav": t1, "cat": "Segura"},
-        {"m": f"Handicap (-1): {t1}", "o": 2.20, "fav": t1, "cat": "Altas"},
-        {"m": "Ambas Marcam: SIM", "o": 1.85, "fav": "Equilibrado", "cat": "Moderada"},
-        {"m": "Mais de 8.5 Cantos", "o": 1.65, "fav": "Ataque Total", "cat": "Segura"},
-        {"m": "Over 1.5 Cartões", "o": 1.45, "fav": "Jogo Tenso", "cat": "Segura"},
-        {"m": f"Dupla Chance: {t1}/Empate", "o": 1.32, "fav": t1, "cat": "Segura"},
-        {"m": "Under 3.5 Gols", "o": 1.40, "fav": "Defensivo", "cat": "Segura"}
+    mercados = [
+        {"m": f"Vitória: {t1}", "o": 1.62, "fav": t1},
+        {"m": "Ambas Marcam: SIM", "o": 1.80, "fav": "Equilibrado"},
+        {"m": "Mais de 8.5 Cantos", "o": 1.70, "fav": "Ataque"},
+        {"m": f"Dupla Chance: {t1}/X", "o": 1.35, "fav": t1},
+        {"m": "Handicap (0): " + t1, "o": 1.50, "fav": t1},
+        {"m": "Over 1.5 Cartões", "o": 1.48, "fav": "Tenso"},
+        {"m": "Under 3.5 Gols", "o": 1.38, "fav": "Defensivo"}
     ]
     
     if est == "Odds Altas":
-        final = [x for x in pool if x["o"] > 1.70]
+        final = [x for x in mercados if x["o"] >= 1.70]
     elif est == "Segura":
-        final = [x for x in pool if x["o"] < 1.60]
+        final = [x for x in mercados if x["o"] < 1.60]
     else:
-        final = pool
+        final = mercados
 
-    res = random.choice(final)
-    return res
+    return random.choice(final if final else mercados)
 
 # 3. TELEGRAM CONFIG
 TOKEN = '8543393879:AAEsaXAAq2A19zbmMEfHZb-R7nLL-VdierU'
 CHAT_ID = '-1003799258159'
 
-# 4. INTERFACE PRINCIPAL (TELA ÚNICA MOBILE)
-st.markdown("<div class='mobile-title'>RONNYP VIP V8 PRO</div>", unsafe_allow_html=True)
+# 4. INTERFACE
+st.markdown("<div class='mobile-title'>RONNYP VIP V8 BLUE</div>", unsafe_allow_html=True)
 
 if 'bilhete' not in st.session_state: st.session_state.bilhete = []
 if 'analisados' not in st.session_state: st.session_state.analisados = []
 
-# Tabs Mobile (Mais fácil que menu lateral)
 tab1, tab2, tab3 = st.tabs(["📥 GRADE", "📋 BILHETE", "⚙️ CONFIG"])
 
 with tab3:
-    st.subheader("Configurações")
-    estrategia = st.selectbox("Estratégia", ["Segura", "Moderada", "Odds Altas"])
-    banca = st.number_input("Sua Banca (R$)", value=1000.0)
+    st.subheader("Painel de Controle")
+    estrategia = st.selectbox("Estratégia", ["Moderada", "Segura", "Odds Altas"])
+    banca = st.number_input("Banca Atual (R$)", value=1000.0)
     percent = st.slider("Stake %", 1, 10, 3)
     valor_entrada = (percent/100) * banca
-    st.success(f"Stake por sinal: R$ {valor_entrada:.2f}")
+    st.info(f"Entrada Sugerida: R$ {valor_entrada:.2f}")
 
 with tab1:
-    grade = st.text_area("COLE A GRADE AQUI", height=120, placeholder="Time A x Time B\nTime C x Time D")
-    if st.button("⚡ ANALISAR JOGOS"):
+    grade = st.text_area("COLE OS JOGOS", height=120, placeholder="Ex: Flamengo x Vasco")
+    if st.button("🔍 ANALISAR AGORA"):
         jogos = [l.strip() for l in grade.split('\n') if 'x' in l.lower()]
         st.session_state.analisados = []
         for j in jogos:
@@ -124,45 +130,46 @@ with tab1:
         st.markdown(f"""
         <div class='mobile-card'>
             <div class='game-header'>{item['jogo']}</div>
-            <div class='fav-tag'>⭐ Favorito: {item['fav']}</div>
+            <div class='fav-tag'>⭐ FAVORITO: {item['fav']}</div>
             <div class='market-box'>
-                <span style='color:#00ff00; font-weight:bold;'>{item['m']}</span>
+                <span style='color:#fff;'>{item['m']}</span>
                 <span class='odd-badge'>@{item['o']}</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
-        if st.button(f"ADICIONAR JOGO {idx+1}", key=f"add_{idx}"):
+        if st.button(f"ADICIONAR À LISTA {idx+1}", key=f"add_{idx}"):
             st.session_state.bilhete.append(item)
             st.toast("✅ Adicionado!")
 
 with tab2:
     if st.session_state.bilhete:
         odd_t = 1.0
-        resumo = ""
+        resumo_texto = "👑 *RONNYP VIP V8 BLUE* 👑\n\n"
         for b in st.session_state.bilhete:
             odd_t *= b['o']
-            st.markdown(f"✅ **{b['jogo']}** (@{b['o']})")
-            resumo += f"🏟️ **{b['jogo']}**\n🎯 {b['m']} (@{b['o']})\n\n"
+            st.markdown(f"🔹 **{b['jogo']}** (@{b['o']})")
+            resumo_texto += f"🏟️ *{b['jogo']}*\n🎯 {b['m']} (@{b['o']})\n\n"
         
         retorno = valor_entrada * odd_t
-        st.markdown(f"### ODD TOTAL: {odd_t:.2f}")
-        st.markdown(f"## RETORNO: R$ {retorno:.2f}")
+        resumo_texto += f"📊 *Odd Total: {odd_t:.2f}*\n💰 Stake: R$ {valor_entrada:.2f}\n💵 *Retorno: R$ {retorno:.2f}*"
         
+        st.markdown(f"### 🚀 ODD TOTAL: {odd_t:.2f}")
+        st.markdown(f"## 💵 RETORNO: R$ {retorno:.2f}")
+        
+        # Botão Telegram
         if st.button("📤 ENVIAR PARA CANAL VIP"):
-            msg = (f"👑 **RONNYP VIP V8 - MOBILE** 👑\n\n"
-                   f"{resumo}"
-                   f"📊 **Odd Total: {odd_t:.2f}**\n"
-                   f"💰 Stake: {percent}% (R$ {valor_entrada:.2f})\n"
-                   f"💵 **Retorno: R$ {retorno:.2f}**\n\n"
-                   f"✅ Cashout Sugerido!\n"
-                   f"🔥 VAMOS PRO GREEN!")
-            
             async def send():
                 bot = Bot(token=TOKEN)
-                await bot.send_message(chat_id=CHAT_ID, text=msg, parse_mode='Markdown')
-            
+                await bot.send_message(chat_id=CHAT_ID, text=resumo_texto, parse_mode='Markdown')
             asyncio.run(send())
-            st.success("ENVIADO!")
+            st.success("ENVIADO AO CANAL!")
+        
+        # Botão WhatsApp Compartilhar
+        msg_wpp = urllib.parse.quote(resumo_texto.replace("*", "")) # Remove asteriscos para o WPP
+        st.markdown(f'<a href="https://wa.me/?text={msg_wpp}" target="_blank" class="btn-wpp">📲 COMPARTILHAR NO WHATSAPP</a>', unsafe_allow_html=True)
+        
+        if st.button("🧹 LIMPAR BILHETE"):
             st.session_state.bilhete = []
+            st.rerun()
     else:
-        st.info("Nenhum jogo no bilhete.")
+        st.info("O bilhete está vazio.")
