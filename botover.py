@@ -4,7 +4,7 @@ import random
 import time
 import os
 import urllib.parse
-import requests  # <-- Nova biblioteca para acessar a API
+import requests
 from telegram import Bot
 from datetime import datetime, timedelta
 
@@ -196,7 +196,7 @@ with t1:
     with col2:
         btn_api = st.button("🚨 VARREDURA API (REAIS)")
 
-    # Lógica Antiga (Mantida como você pediu)
+    # Lógica Manual
     if btn_manual:
         if grade:
             jogos = [j for j in grade.split('\n') if 'x' in j.lower()]
@@ -207,7 +207,7 @@ with t1:
                     "jogo": j, "m": random.choice(mercados), "o": round(random.uniform(1.5, 2.3), 2), "conf": random.randint(93,99)
                 })
                 
-    # Nova Lógica Integrada (API Real)
+    # Nova Lógica Integrada (API Real com Rastreador de Erro)
     if btn_api:
         with st.spinner("Conectando às casas de apostas..."):
             url = f"https://api.the-odds-api.com/v4/sports/upcoming/odds/?apiKey={ODDS_API_KEY}&regions=eu&markets=h2h"
@@ -247,7 +247,8 @@ with t1:
                     if not st.session_state.analisados:
                         st.warning("Nenhum jogo de futebol encontrado no momento.")
                 else:
-                    st.error("Erro na API. Verifique se a sua chave está correta.")
+                    # AQUI ESTÁ O RASTREADOR DE ERROS!
+                    st.error(f"Código do Erro: {resposta.status_code} | Detalhes: {resposta.text}")
             except Exception as e:
                 st.error(f"Erro de conexão: {e}")
 
