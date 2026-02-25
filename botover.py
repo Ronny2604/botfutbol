@@ -19,8 +19,8 @@ LINK_CANAL = "https://t.me/+_4ZgNo3xYFo5M2Ex"
 LINK_SUPORTE = "https://wa.me/5561996193390?text=Olá%20RonnyP"
 LINK_CASA_1 = "https://esportiva.bet.br?ref=511e1f11699f"
 
-# SUA CHAVE DA API THE ODDS:
-ODDS_API_KEY = "F6d1f252e4a5b31d7db04cfd7be87ece"
+# SUA NOVA CHAVE DA API THE ODDS:
+ODDS_API_KEY = "7d01c19fd029a0f1f529051d6904d21b"
 
 # --- 2. FUNÇÕES DE SISTEMA ---
 def carregar_keys():
@@ -247,7 +247,7 @@ with t1:
                     if not st.session_state.analisados:
                         st.warning("Nenhum jogo de futebol encontrado no momento.")
                 else:
-                    # AQUI ESTÁ O RASTREADOR DE ERROS!
+                    # RASTREADOR DE ERROS
                     st.error(f"Código do Erro: {resposta.status_code} | Detalhes: {resposta.text}")
             except Exception as e:
                 st.error(f"Erro de conexão: {e}")
