@@ -19,8 +19,8 @@ LINK_CANAL = "https://t.me/+_4ZgNo3xYFo5M2Ex"
 LINK_SUPORTE = "https://wa.me/5561996193390?text=Olá%20RonnyP"
 LINK_CASA_1 = "https://esportiva.bet.br?ref=511e1f11699f"
 
-# SUA CHAVE DA THE ODDS API (NOVA E BLINDADA CONTRA BLOQUEIOS)
-ODDS_API_KEY = "Da4633249ece20283d29604cec7a7114"
+# SUA CHAVE DA THE ODDS API (CORRIGIDA COM 'd' MINÚSCULO)
+ODDS_API_KEY = "da4633249ece20283d29604cec7a7114"
 
 # --- 2. FUNÇÕES DE SISTEMA ---
 def carregar_keys():
@@ -210,7 +210,6 @@ with t1:
     # Nova Lógica Integrada (THE ODDS API - Real com Filtro VIP)
     if btn_api:
         with st.spinner("Puxando jogos principais e odds reais..."):
-            # Essa URL puxa TODOS os esportes do mundo de uma vez (gasta só 1 crédito da API)
             url = f"https://api.the-odds-api.com/v4/sports/upcoming/odds/?apiKey={ODDS_API_KEY}&regions=eu,uk&markets=h2h"
             
             try:
@@ -222,7 +221,7 @@ with t1:
                     # Filtra apenas os esportes que tem a palavra 'soccer' (futebol)
                     jogos_futebol = [d for d in dados if 'soccer' in d.get('sport_key', '')]
                     
-                    # --- FILTRO DE LIGAS FAMOSAS (Formato da The Odds API) ---
+                    # --- FILTRO DE LIGAS FAMOSAS ---
                     ligas_famosas = [
                         "soccer_brazil_campeonato", "soccer_brazil_serie_b", 
                         "soccer_epl", "soccer_uefa_champs_league", 
