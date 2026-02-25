@@ -1,175 +1,160 @@
 import streamlit as st
 import asyncio
 import random
-import io
+import time
 import urllib.parse
-from PIL import Image, ImageDraw, ImageFont
+import hashlib
 from telegram import Bot
+from datetime import datetime, timedelta
 
-# 1. CONFIGURAÇÃO MOBILE-FIRST "BLUE PREMIUM"
-st.set_page_config(page_title="RonnyP V8 BLUE", layout="wide", initial_sidebar_state="collapsed")
+# 1. CONFIGURAÇÃO E SEGURANÇA
+st.set_page_config(page_title="RonnyP V8 GATEKEEPER", layout="wide", initial_sidebar_state="expanded")
+
+# Chave Mestra para VOCÊ gerar as chaves dos usuários (Mude 'admin123' para sua senha pessoal)
+MASTER_KEY = "ronnyp@2025"
+
+if 'keys_ativas' not in st.session_state:
+    st.session_state.keys_ativas = {} # Dicionário para guardar {chave: expiracao}
+if 'autenticado' not in st.session_state:
+    st.session_state.autenticado = False
 
 st.markdown("""
     <style>
-    .block-container { padding-top: 1rem; padding-bottom: 1rem; padding-left: 0.5rem; padding-right: 0.5rem; }
-    
-    /* Paleta de Cores Blue Premium */
     .stApp { background-color: #040d1a; }
-    
     .mobile-title {
-        font-size: 1.4rem;
-        color: #00d4ff;
-        text-align: center;
-        font-weight: bold;
-        margin-bottom: 1rem;
-        border-bottom: 1px solid #1a2a3a;
-        padding-bottom: 10px;
+        font-size: 1.6rem; color: #00d4ff; text-align: center; font-weight: bold;
+        text-shadow: 0px 0px 10px rgba(0,212,255,0.5); margin-bottom: 1rem;
     }
-
-    .mobile-card {
-        background: #0a1626;
-        border: 1px solid #1a2a3a;
-        border-radius: 12px;
-        padding: 15px;
-        margin-bottom: 12px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    .auth-box {
+        background: #0a1626; padding: 30px; border-radius: 15px;
+        border: 2px solid #00d4ff; text-align: center; margin-top: 50px;
     }
-    
-    .game-header { color: #ffffff; font-size: 1rem; font-weight: bold; }
-    .fav-tag { color: #00d4ff; font-size: 0.75rem; font-weight: bold; }
-    .market-box { background: #132338; padding: 12px; border-radius: 8px; border-left: 4px solid #00d4ff; margin: 10px 0; }
-    .odd-badge { background: #00d4ff; color: #040d1a; padding: 3px 10px; border-radius: 6px; font-weight: bold; float: right; }
-
-    /* Botões Mobile */
+    .btn-casa {
+        background: linear-gradient(90deg, #0052ff, #00d4ff);
+        color: white !important; padding: 10px; text-decoration: none;
+        border-radius: 8px; display: block; text-align: center;
+        font-weight: bold; margin-bottom: 10px; font-size: 0.9rem;
+    }
     .stButton>button {
-        height: 3.5rem;
-        border-radius: 12px !important;
-        background: #00d4ff !important;
-        color: #040d1a !important;
-        font-weight: bold !important;
-        border: none !important;
-        width: 100%;
+        height: 3rem; border-radius: 10px !important;
+        background: #00d4ff !important; color: #040d1a !important;
+        font-weight: bold !important; border: none !important; width: 100%;
     }
-    
-    /* Botão WhatsApp */
-    .btn-wpp {
-        background-color: #25d366;
-        color: white !important;
-        padding: 15px;
-        text-decoration: none;
-        border-radius: 12px;
-        font-weight: bold;
-        display: block;
-        text-align: center;
-        margin-top: 10px;
-        font-size: 1rem;
-    }
-    
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    .stTabs [data-baseweb="tab-list"] { background-color: #040d1a; border-radius: 10px; }
-    .stTabs [data-baseweb="tab"] { color: #fff; }
-    .stTabs [aria-selected="true"] { color: #00d4ff !important; border-bottom-color: #00d4ff !important; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. IA DE ANÁLISE DIVERSIFICADA
-def get_ia_analysis(jogo, est):
-    times = jogo.split(' x ')
-    t1 = times[0].strip()
-    
-    mercados = [
-        {"m": f"Vitória: {t1}", "o": 1.62, "fav": t1},
-        {"m": "Ambas Marcam: SIM", "o": 1.80, "fav": "Equilibrado"},
-        {"m": "Mais de 8.5 Cantos", "o": 1.70, "fav": "Ataque"},
-        {"m": f"Dupla Chance: {t1}/X", "o": 1.35, "fav": t1},
-        {"m": "Handicap (0): " + t1, "o": 1.50, "fav": t1},
-        {"m": "Over 1.5 Cartões", "o": 1.48, "fav": "Tenso"},
-        {"m": "Under 3.5 Gols", "o": 1.38, "fav": "Defensivo"}
-    ]
-    
-    if est == "Odds Altas":
-        final = [x for x in mercados if x["o"] >= 1.70]
-    elif est == "Segura":
-        final = [x for x in mercados if x["o"] < 1.60]
-    else:
-        final = mercados
+# 2. SISTEMA DE LOGIN / ACESSO
+def verificar_acesso():
+    if not st.session_state.autenticado:
+        st.markdown("<div class='mobile-title'>👑 RONNYP VIP V8</div>", unsafe_allow_html=True)
+        with st.container():
+            st.markdown("<div class='auth-box'>", unsafe_allow_html=True)
+            st.subheader("🔐 ACESSO RESTRITO")
+            key_input = st.text_input("Insira sua KEY de acesso:", type="password")
+            
+            if st.button("LIBERAR ACESSO"):
+                # Verifica se é a Master Key ou uma Key gerada
+                if key_input == MASTER_KEY:
+                    st.session_state.autenticado = True
+                    st.session_state.is_admin = True
+                    st.rerun()
+                elif key_input in st.session_state.keys_ativas:
+                    exp = st.session_state.keys_ativas[key_input]
+                    if datetime.now() < exp:
+                        st.session_state.autenticado = True
+                        st.session_state.is_admin = False
+                        st.rerun()
+                    else:
+                        st.error("Esta Key expirou!")
+                else:
+                    st.error("Key inválida ou expirada!")
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+            st.info("Deseja uma chave de teste? Fale com o suporte.")
+        return False
+    return True
 
-    return random.choice(final if final else mercados)
+# 3. FUNÇÕES DE IA E TELEGRAM (Mantidas das versões anteriores)
+def get_advanced_analysis(jogo):
+    expira_em = datetime.now() + timedelta(minutes=random.randint(5, 10))
+    mercados = [{"m": f"Vitória Favorito", "o": 1.65}, {"m": "Ambas Marcam", "o": 1.82}, {"m": "Over 8.5 Cantos", "o": 1.75}]
+    res = random.choice(mercados)
+    return {**res, "conf": random.randint(85,99), "expira": expira_em.strftime("%H:%M"), "jogo": jogo}
 
-# 3. TELEGRAM CONFIG
 TOKEN = '8543393879:AAEsaXAAq2A19zbmMEfHZb-R7nLL-VdierU'
 CHAT_ID = '-1003799258159'
 
-# 4. INTERFACE
-st.markdown("<div class='mobile-title'>RONNYP VIP V8 BLUE</div>", unsafe_allow_html=True)
+async def telegram_action(msg):
+    try:
+        bot = Bot(token=TOKEN)
+        await bot.send_message(chat_id=CHAT_ID, text=msg, parse_mode='Markdown')
+        return True
+    except: return False
 
-if 'bilhete' not in st.session_state: st.session_state.bilhete = []
-if 'analisados' not in st.session_state: st.session_state.analisados = []
-
-tab1, tab2, tab3 = st.tabs(["📥 GRADE", "📋 BILHETE", "⚙️ CONFIG"])
-
-with tab3:
-    st.subheader("Painel de Controle")
-    estrategia = st.selectbox("Estratégia", ["Moderada", "Segura", "Odds Altas"])
-    banca = st.number_input("Banca Atual (R$)", value=1000.0)
-    percent = st.slider("Stake %", 1, 10, 3)
-    valor_entrada = (percent/100) * banca
-    st.info(f"Entrada Sugerida: R$ {valor_entrada:.2f}")
-
-with tab1:
-    grade = st.text_area("COLE OS JOGOS", height=120, placeholder="Ex: Flamengo x Vasco")
-    if st.button("🔍 ANALISAR AGORA"):
-        jogos = [l.strip() for l in grade.split('\n') if 'x' in l.lower()]
-        st.session_state.analisados = []
-        for j in jogos:
-            res = get_ia_analysis(j, estrategia)
-            st.session_state.analisados.append({"jogo": j, **res})
+# --- EXECUÇÃO DO APP ---
+if verificar_acesso():
     
-    for idx, item in enumerate(st.session_state.analisados):
-        st.markdown(f"""
-        <div class='mobile-card'>
-            <div class='game-header'>{item['jogo']}</div>
-            <div class='fav-tag'>⭐ FAVORITO: {item['fav']}</div>
-            <div class='market-box'>
-                <span style='color:#fff;'>{item['m']}</span>
-                <span class='odd-badge'>@{item['o']}</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button(f"ADICIONAR À LISTA {idx+1}", key=f"add_{idx}"):
-            st.session_state.bilhete.append(item)
-            st.toast("✅ Adicionado!")
-
-with tab2:
-    if st.session_state.bilhete:
-        odd_t = 1.0
-        resumo_texto = "👑 *RONNYP VIP V8 BLUE* 👑\n\n"
-        for b in st.session_state.bilhete:
-            odd_t *= b['o']
-            st.markdown(f"🔹 **{b['jogo']}** (@{b['o']})")
-            resumo_texto += f"🏟️ *{b['jogo']}*\n🎯 {b['m']} (@{b['o']})\n\n"
+    # MENU LATERAL - ADMIN (Só aparece se logar com a MASTER_KEY)
+    with st.sidebar:
+        if st.session_state.get('is_admin', False):
+            st.header("🔑 GERADOR DE KEYS")
+            nova_key = st.text_input("Criar Nova Key (Ex: TESTE-01)")
+            tempo_horas = st.number_input("Validade (Horas)", min_value=1, value=24)
+            if st.button("GERAR E ATIVAR"):
+                validade = datetime.now() + timedelta(hours=tempo_horas)
+                st.session_state.keys_ativas[nova_key] = validade
+                st.success(f"Key '{nova_key}' ativa até {validade.strftime('%d/%m %H:%M')}")
+                # Link de convite com a key inclusa (opcional para facilitar)
+                link_pronto = f"https://botoverpy-ronnyp.streamlit.app/?key={nova_key}"
+                st.code(link_pronto, language="text")
         
-        retorno = valor_entrada * odd_t
-        resumo_texto += f"📊 *Odd Total: {odd_t:.2f}*\n💰 Stake: R$ {valor_entrada:.2f}\n💵 *Retorno: R$ {retorno:.2f}*"
+        st.markdown("### 🏦 CASAS PARCEIRAS")
+        st.markdown(f'<a href="https://esportiva.bet.br?ref=511e1f11699f" target="_blank" class="btn-casa">🎰 ESPORTIVA BET</a>', unsafe_allow_html=True)
+        st.markdown(f'<a href="https://referme.to/ronyelissonoliveiran-7" target="_blank" class="btn-casa">💎 CASA PREMIUM</a>', unsafe_allow_html=True)
         
-        st.markdown(f"### 🚀 ODD TOTAL: {odd_t:.2f}")
-        st.markdown(f"## 💵 RETORNO: R$ {retorno:.2f}")
-        
-        # Botão Telegram
-        if st.button("📤 ENVIAR PARA CANAL VIP"):
-            async def send():
-                bot = Bot(token=TOKEN)
-                await bot.send_message(chat_id=CHAT_ID, text=resumo_texto, parse_mode='Markdown')
-            asyncio.run(send())
-            st.success("ENVIADO AO CANAL!")
-        
-        # Botão WhatsApp Compartilhar
-        msg_wpp = urllib.parse.quote(resumo_texto.replace("*", "")) # Remove asteriscos para o WPP
-        st.markdown(f'<a href="https://wa.me/?text={msg_wpp}" target="_blank" class="btn-wpp">📲 COMPARTILHAR NO WHATSAPP</a>', unsafe_allow_html=True)
-        
-        if st.button("🧹 LIMPAR BILHETE"):
-            st.session_state.bilhete = []
+        if st.button("SAIR / LOGOUT"):
+            st.session_state.autenticado = False
             st.rerun()
-    else:
-        st.info("O bilhete está vazio.")
+
+    # TELA PRINCIPAL
+    st.markdown("<div class='mobile-title'>RONNYP VIP V8 PLATINUM</div>", unsafe_allow_html=True)
+    
+    tab1, tab2, tab3 = st.tabs(["🔍 RADAR IA", "📋 BILHETE", "✅ GREEN"])
+
+    if 'bilhete' not in st.session_state: st.session_state.bilhete = []
+    if 'analisados' not in st.session_state: st.session_state.analisados = []
+
+    with tab1:
+        grade = st.text_area("COLE A GRADE", height=100)
+        if st.button("📡 SCANNER IA"):
+            jogos = [l.strip() for l in grade.split('\n') if 'x' in l.lower()]
+            st.session_state.analisados = [get_advanced_analysis(j) for j in jogos]
+        
+        for idx, item in enumerate(st.session_state.analisados):
+            st.markdown(f"""
+            <div style='background:#0a1626; border:1px solid #1a2a3a; padding:15px; border-radius:12px; margin-bottom:10px;'>
+                <span style='background:red; color:white; padding:2px 5px; border-radius:5px; font-size:10px;'>EXPIRA {item['expira']}</span>
+                <div style='color:white; font-weight:bold; margin-top:5px;'>{item['jogo']}</div>
+                <div style='background:#132338; padding:10px; border-left:4px solid #00d4ff; margin:10px 0;'>
+                    <span style='color:white;'>{item['m']}</span>
+                    <span style='float:right; color:#00d4ff;'>@{item['o']}</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            if st.button(f"ADICIONAR {idx+1}"):
+                st.session_state.bilhete.append(item)
+
+    with tab2:
+        if st.session_state.bilhete:
+            odd_t = 1.0
+            resumo = "👑 *RONNYP VIP V8* 👑\n\n"
+            for b in st.session_state.bilhete:
+                odd_t *= b['o']
+                resumo += f"🏟️ *{b['jogo']}*\n🎯 {b['m']} (@{b['o']})\n\n"
+            
+            st.markdown(f"### ODD TOTAL: {odd_t:.2f}")
+            if st.button("📤 ENVIAR CANAL"):
+                asyncio.run(telegram_action(resumo + f"📊 Odd: {odd_t:.2f}"))
+                st.success("Enviado!")
+        else:
+            st.info("Selecione jogos no Radar.")
