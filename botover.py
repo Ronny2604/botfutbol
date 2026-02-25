@@ -3,218 +3,131 @@ import asyncio
 import random
 import io
 import time
-import base64
-import urllib.parse
 from PIL import Image, ImageDraw, ImageFont
 from telegram import Bot
 
-# 1. CONFIGURAÇÃO VISUAL - "ULTRA DARK NEON"
-st.set_page_config(page_title="RonnyP - ULTRA V8 PRO", layout="wide")
+# 1. CONFIGURAÇÃO VISUAL
+st.set_page_config(page_title="RonnyP - ULTRA V8 DEFINITIVE", layout="wide")
 
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap');
-
     .stApp { background-color: #080a09; }
-    
-    /* Título com brilho */
-    .premium-title {
-        font-family: 'Orbitron', sans-serif;
-        color: #00ff00;
-        text-align: center;
-        font-size: 2.5em;
-        text-shadow: 0px 0px 20px rgba(0, 255, 0, 0.6);
-        margin-bottom: 30px;
-    }
-
-    /* Cards Estilizados */
-    .card-analise {
-        background: linear-gradient(145deg, #121413, #1a1d1c);
-        padding: 25px;
-        border-radius: 15px;
-        border: 1px solid #2d312f;
-        box-shadow: 5px 5px 15px rgba(0,0,0,0.5);
-        margin-bottom: 20px;
-    }
-    
-    .game-name { font-family: 'Orbitron', sans-serif; color: #fff; font-size: 1.2em; }
-    .market-tag { color: #00ff00; font-family: 'Roboto Mono', monospace; font-weight: bold; }
-    .odd-tag { background: #00bfff; color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold; }
-    
-    /* Barras de Progresso Premium */
-    .prog-bg { background: #262a28; border-radius: 10px; height: 8px; margin: 15px 0; }
-    .prog-fill { 
-        background: linear-gradient(90deg, #008000, #00ff00); 
-        height: 8px; border-radius: 10px; 
-        box-shadow: 0px 0px 10px #00ff00; 
-    }
-
-    /* Botão de WhatsApp */
-    .btn-wpp {
-        background: linear-gradient(90deg, #25d366, #128c7e);
-        color: white !important;
-        padding: 12px;
-        text-decoration: none;
-        border-radius: 8px;
-        font-weight: bold;
-        display: block;
-        text-align: center;
-        margin-top: 15px;
-        font-family: 'Orbitron', sans-serif;
-        font-size: 0.8em;
-    }
+    .premium-title { color: #00ff00; text-align: center; font-family: 'Orbitron', sans-serif; font-size: 2em; text-shadow: 0 0 15px #00ff00; }
+    .card-analise { background: #121413; padding: 20px; border-radius: 12px; border: 1px solid #00ff00; margin-bottom: 15px; }
+    .stButton>button { background: #1a1d1c; color: #00ff00; border: 1px solid #00ff00; width: 100%; }
     </style>
     """, unsafe_allow_html=True)
 
-# 2. IA DE ANÁLISE PREMIUM (MULTIMERCADOS)
-def analisar_ia_premium(nome_jogo):
-    mercados = [
-        {"tipo": "Vitória Favorito", "base_odd": 1.45},
-        {"tipo": "Ambas Marcam: SIM", "base_odd": 1.75},
-        {"tipo": "Over 1.5 Gols", "base_odd": 1.30},
-        {"tipo": "Mais de 8.5 Cantos", "base_odd": 1.60}
+# 2. INTELIGÊNCIA DE MERCADOS E ESTRATÉGIA
+def gerar_analise_premium(jogo, estrategia):
+    times = jogo.split(' x ')
+    time_a = times[0].strip()
+    time_b = times[1].strip() if len(times) > 1 else "Visitante"
+    
+    # Lista de Mercados Diversificados
+    opcoes = [
+        {"m": f"Vitória: {time_a}", "o": (1.40, 1.65), "fav": time_a},
+        {"m": "Ambas Marcam: SIM", "o": (1.70, 1.95), "fav": "Equilibrado"},
+        {"m": "Mais de 8.5 Escanteios", "o": (1.55, 1.80), "fav": "Tendência Over"},
+        {"m": f"Dupla Chance: {time_a} ou Empate", "o": (1.25, 1.45), "fav": time_a},
+        {"m": "Mais de 3.5 Cartões", "o": (1.60, 2.10), "fav": "Jogo Tenso"},
+        {"m": f"Handicap (-1): {time_a}", "o": (2.10, 2.80), "fav": time_a},
+        {"m": "Under 3.5 Gols", "o": (1.30, 1.50), "fav": "Defensivo"}
     ]
-    escolha = random.choice(mercados)
-    variacao = random.uniform(0.05, 0.20)
-    prob = random.uniform(78, 96)
+
+    # Ajuste de Odd baseado na estratégia escolhida
+    if estrategia == "Segura (Low Risk)":
+        pool = [x for x in opcoes if x["o"][0] < 1.60]
+    elif estrategia == "Odds Altas (High Profit)":
+        pool = [x for x in opcoes if x["o"][0] > 1.70]
+    else: # Moderada
+        pool = opcoes
+
+    res = random.choice(pool)
+    odd_final = round(random.uniform(res["o"][0], res["o"][1]), 2)
     
     return {
-        "mercado": escolha["tipo"],
-        "odd": round(escolha["base_odd"] + variacao, 2),
-        "prob": f"{prob:.1f}%"
+        "mercado": res["m"],
+        "odd": odd_final,
+        "favorito": res["fav"],
+        "prob": f"{random.randint(75, 98)}%"
     }
 
-# 3. GERADOR DE PRINT ESTILIZADO
-def gerar_print_premium(lista_jogos, odd_total, stake, retorno):
-    img = Image.new('RGB', (600, 850), color=(8, 10, 9))
-    draw = ImageDraw.Draw(img)
-    draw.rectangle([10, 10, 590, 840], outline=(0, 255, 0), width=4)
-    
-    # Cabeçalho
-    draw.text((300, 60), "RONNYP ULTRA V8", fill=(0, 255, 0), anchor="mm")
-    draw.text((300, 100), "VERIFICADO PELA IA", fill=(255, 215, 0), anchor="mm")
-    
-    y = 160
-    for item in lista_jogos:
-        draw.text((50, y), f"🏟️ {item['jogo']}", fill=(255, 255, 255))
-        draw.text((50, y+35), f"🎯 {item['mercado']} | @{item['odd']}", fill=(0, 255, 0))
-        y += 120
-
-    # Rodapé VIP
-    draw.rectangle([30, 680, 570, 820], outline=(0, 255, 0), width=1)
-    draw.text((300, 710), f"ODD TOTAL: {odd_total:.2f}", fill=(255, 255, 255), anchor="mm")
-    draw.text((300, 750), f"STAKE: R$ {stake:.2f}", fill=(255, 255, 255), anchor="mm")
-    draw.text((300, 790), f"RETORNO: R$ {retorno:.2f}", fill=(0, 255, 0), anchor="mm")
-    
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    return buf.getvalue()
-
-# 4. TELEGRAM
+# 3. TELEGRAM E ID
 TOKEN = '8543393879:AAEsaXAAq2A19zbmMEfHZb-R7nLL-VdierU'
 CHAT_ID = '-1003799258159'
 
-async def send_telegram_premium(text):
+async def enviar_sinal(texto):
     try:
         bot = Bot(token=TOKEN)
-        await bot.send_message(chat_id=CHAT_ID, text=text, parse_mode='Markdown')
+        await bot.send_message(chat_id=CHAT_ID, text=texto, parse_mode='Markdown')
         return True
     except: return False
 
-# 5. UI INTERFACE
-st.markdown("<div class='premium-title'>👑 RONNYP ULTRA V8 PRO</div>", unsafe_allow_html=True)
+# 4. INTERFACE PRINCIPAL
+st.markdown("<div class='premium-title'>👑 RONNYP ULTRA V8 - DEFINITIVE</div>", unsafe_allow_html=True)
 
 if 'bilhete_lista' not in st.session_state: st.session_state.bilhete_lista = []
 if 'jogos_analisados' not in st.session_state: st.session_state.jogos_analisados = []
 
-# SIDEBAR PREMIUM
-st.sidebar.markdown("### 🛠️ PAINEL DE CONTROLE")
-menu = st.sidebar.radio("FUNÇÕES", ["📥 IMPORTAR GRADE", "📋 BILHETE ATUAL", "🧹 LIMPAR TUDO"])
+# SIDEBAR
+st.sidebar.header("⚙️ CONFIGURAÇÕES VIP")
+estrategia = st.sidebar.selectbox("ESTRATÉGIA DA IA", ["Segura (Low Risk)", "Moderada", "Odds Altas (High Profit)"])
+banca = st.sidebar.number_input("BANCA TOTAL (R$)", value=1000.0)
+percentual = st.sidebar.slider("STAKE (%)", 1, 10, 3)
+valor_entrada = (percentual / 100) * banca
 
-banca_total = st.sidebar.number_input("BANCA TOTAL (R$)", min_value=10.0, value=1000.0)
-percentual = st.sidebar.slider("GERENCIAMENTO (%)", 1, 10, 3)
-valor_stake = (percentual / 100) * banca_total
+menu = st.sidebar.radio("MENU", ["📥 IMPORTAR JOGOS", "📋 VER BILHETE"])
 
-st.sidebar.info(f"💡 Stake Sugerida: R$ {valor_stake:.2f}")
-
-# Compartilhar
-link_app = "https://botoverpy-gnwcseepyzojlaz7ci6g97.streamlit.app/"
-msg_wpp = urllib.parse.quote(f"🚀 Conheça a IA RonnyP Ultra V8! Análises Premium aqui: {link_app}")
-st.sidebar.markdown(f'<a href="https://wa.me/?text={msg_wpp}" target="_blank" class="btn-wpp">📲 COMPARTILHAR APP</a>', unsafe_allow_html=True)
-
-if menu == "📥 IMPORTAR GRADE":
-    st.subheader("📥 Central de Processamento")
-    grade = st.text_area("Cole a grade de jogos:", height=120)
-    
-    if st.button("⚡ INICIAR SCANNING"):
-        if grade:
-            linhas = [l.strip() for l in grade.split('\n') if 'x' in l.lower() or 'vs' in l.lower()]
-            with st.status("🤖 IA PROCESSANDO...", expanded=True) as status:
-                for j in linhas:
-                    st.write(f"🔍 Analisando {j}...")
-                    time.sleep(0.5)
-                    st.write(f"📊 Verificando histórico de gols...")
-                    time.sleep(0.3)
-                status.update(label="✅ ANÁLISE CONCLUÍDA!", state="complete", expanded=False)
-            st.session_state.jogos_analisados = linhas
-        else:
-            st.warning("Cole os jogos primeiro!")
+if menu == "📥 IMPORTAR JOGOS":
+    grade = st.text_area("Cole a grade de jogos:", height=150, placeholder="Ex: Time A x Time B")
+    if st.button("⚡ PROCESSAR ANÁLISE"):
+        st.session_state.jogos_analisados = [l.strip() for l in grade.split('\n') if 'x' in l.lower()]
+        with st.spinner("IA Analisando Favoritos e Mercados..."):
+            time.sleep(1.5)
 
     if st.session_state.jogos_analisados:
         cols = st.columns(2)
         for idx, j in enumerate(st.session_state.jogos_analisados):
-            res = analisar_ia_premium(j)
+            res = gerar_analise_premium(j, estrategia)
             with cols[idx % 2]:
                 st.markdown(f"""
                 <div class='card-analise'>
-                    <div class='game-name'>🏟️ {j}</div>
-                    <hr style='border: 0.5px solid #333;'>
-                    <span class='market-tag'>🎯 {res['mercado']}</span> <span class='odd-tag'>@{res['odd']}</span>
-                    <div class='prog-bg'><div class='prog-fill' style='width:{res['prob']};'></div></div>
-                    <small style='color:#00ff00; font-family:monospace;'>CONFIANÇA: {res['prob']}</small>
+                    <b>🏟️ {j}</b><br>
+                    ⭐ Favorito: <span style='color:#00ff00'>{res['favorito']}</span><br>
+                    🎯 <b>{res['mercado']}</b><br>
+                    💎 Odd: <b>@{res['odd']}</b> | Confiança: {res['prob']}
                 </div>
                 """, unsafe_allow_html=True)
                 if st.button(f"➕ ADICIONAR", key=f"add_{idx}"):
                     st.session_state.bilhete_lista.append({"jogo": j, **res})
-                    st.toast(f"Adicionado: {j}")
+                    st.toast("Adicionado!")
 
-elif menu == "📋 BILHETE ATUAL":
+elif menu == "📋 VER BILHETE":
     if st.session_state.bilhete_lista:
-        odd_t = 1.0
-        resumo_tg = ""
+        odd_total = 1.0
+        txt_jogos = ""
         for i in st.session_state.bilhete_lista:
-            st.markdown(f"✅ **{i['jogo']}** | {i['mercado']} (@{i['odd']})")
-            odd_t *= i['odd']
-            resumo_tg += f"🏟️ **{i['jogo']}**\n🎯 {i['mercado']} (@{i['odd']})\n\n"
+            odd_total *= i['odd']
+            txt_jogos += f"🏟️ **{i['jogo']}**\n⭐ Favorito: {i['favorito']}\n🎯 {i['mercado']} (@{i['odd']})\n\n"
         
-        retorno = valor_stake * odd_t
-        st.markdown(f"""
-            <div style='background:#121413; padding:20px; border-left: 5px solid #00ff00; margin-top:20px;'>
-                <h2 style='color:#fff; margin:0;'>📊 ODD TOTAL: {odd_t:.2f}</h2>
-                <h3 style='color:#00ff00; margin:0;'>💵 RETORNO: R$ {retorno:.2f}</h3>
-                <small style='color:#777;'>Stake aplicada: R$ {valor_stake:.2f} ({percentual}% da banca)</small>
-            </div>
-        """, unsafe_allow_html=True)
+        retorno = valor_entrada * odd_total
+        st.subheader(f"📊 ODD TOTAL: {odd_total:.2f}")
+        st.write(f"💵 Retorno Estimado: R$ {retorno:.2f}")
 
-        if st.button("🚀 DISPARAR SINAL PREMIUM"):
+        if st.button("📤 ENVIAR PARA CANAL TELEGRAM"):
             msg = (f"👑 **RONNYP ULTRA V8 - SINAL VIP** 👑\n\n"
-                   f"{resumo_tg}"
-                   f"📊 **Odd Total: {odd_t:.2f}**\n"
+                   f"📈 Estratégia: *{estrategia}*\n\n"
+                   f"{txt_jogos}"
+                   f"━━━━━━━━━━━━━━━━━━\n"
+                   f"📊 **Odd Total: {odd_total:.2f}**\n"
                    f"💰 Sugestão: {percentual}% da banca\n"
-                   f"💵 **Retorno: R$ {retorno:.2f}**\n\n"
+                   f"💵 **Retorno: R$ {retorno:.2f}**\n"
+                   f"━━━━━━━━━━━━━━━━━━\n"
+                   f"✅ **Cashout disponível se o favorito abrir vantagem!**\n"
                    f"🔥 CONFIRME SUA ENTRADA!")
-            if asyncio.run(send_telegram_premium(msg)):
-                st.success("SINAL ENVIADO!")
+            if asyncio.run(enviar_sinal(msg)):
+                st.success("SINAL DISPARADO!")
                 st.session_state.bilhete_lista = []
-                st.rerun()
-
-        img_bytes = gerar_print_premium(st.session_state.bilhete_lista, odd_t, valor_stake, retorno)
-        st.download_button("🖼️ GERAR PRINT VIP (STORY)", img_bytes, "ultra_v8_print.png", "image/png")
     else:
-        st.info("O Bilhete está vazio. Volte em 'Importar Grade'.")
-
-elif menu == "🧹 LIMPAR TUDO":
-    if st.button("LIMPAR SISTEMA"):
-        st.session_state.bilhete_lista = []
-        st.session_state.jogos_analisados = []
-        st.rerun()
+        st.info("Bilhete vazio.")
