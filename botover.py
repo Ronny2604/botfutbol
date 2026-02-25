@@ -19,7 +19,7 @@ LINK_CANAL = "https://t.me/+_4ZgNo3xYFo5M2Ex"
 LINK_SUPORTE = "https://wa.me/5561996193390?text=Olá%20RonnyP"
 LINK_CASA_1 = "https://esportiva.bet.br?ref=511e1f11699f"
 
-# SUA CHAVE DA THE ODDS API (CORRIGIDA COM 'd' MINÚSCULO)
+# SUA CHAVE DA THE ODDS API (ATIVA E FUNCIONANDO)
 ODDS_API_KEY = "da4633249ece20283d29604cec7a7114"
 
 # --- 2. FUNÇÕES DE SISTEMA ---
@@ -187,14 +187,33 @@ with st.sidebar:
 # --- 8. RADAR ---
 t1, t2 = st.tabs(["🚀 SCANNER IA", "📋 BILHETE"])
 
+# Dicionário de Ligas para a The Odds API
+LIGAS_DISPONIVEIS = {
+    "🇬🇧 Premier League (Inglaterra)": "soccer_epl",
+    "🇪🇺 Champions League": "soccer_uefa_champs_league",
+    "🇪🇸 La Liga (Espanha)": "soccer_spain_la_liga",
+    "🇮🇹 Serie A (Itália)": "soccer_italy_serie_a",
+    "🇩🇪 Bundesliga (Alemanha)": "soccer_germany_bundesliga",
+    "🇫🇷 Ligue 1 (França)": "soccer_france_ligue_one",
+    "🇧🇷 Brasileirão Série A": "soccer_brazil_campeonato",
+    "🌎 Libertadores": "soccer_conmebol_libertadores"
+}
+
 with t1:
     grade = st.text_area("COLE A GRADE (Para uso manual)", height=60)
+    
+    st.markdown("---")
+    st.markdown("<h4 style='color:white;'>🎯 VARREDURA AUTOMÁTICA VIP</h4>", unsafe_allow_html=True)
+    
+    # O usuário escolhe a liga!
+    liga_selecionada = st.selectbox("Escolha o Campeonato:", list(LIGAS_DISPONIVEIS.keys()))
+    codigo_da_liga = LIGAS_DISPONIVEIS[liga_selecionada]
     
     col1, col2 = st.columns(2)
     with col1:
         btn_manual = st.button("INICIAR MANUAL")
     with col2:
-        btn_api = st.button("🚨 VARREDURA API (REAIS)")
+        btn_api = st.button("🚨 BUSCAR ODDS REAIS")
 
     # Lógica Manual
     if btn_manual:
@@ -207,10 +226,10 @@ with t1:
                     "jogo": j, "m": random.choice(mercados), "o": round(random.uniform(1.5, 2.3), 2), "conf": random.randint(93,99)
                 })
                 
-    # Nova Lógica Integrada (THE ODDS API - Real com Filtro VIP)
+    # Lógica da API Otimizada (Com filtro de jogos do DIA)
     if btn_api:
-        with st.spinner("Puxando jogos principais e odds reais..."):
-            url = f"https://api.the-odds-api.com/v4/sports/upcoming/odds/?apiKey={ODDS_API_KEY}&regions=eu,uk&markets=h2h"
+        with st.spinner(f"Varrendo a {liga_selecionada}..."):
+            url = f"https://api.the-odds-api.com/v4/sports/{codigo_da_liga}/odds/?apiKey={ODDS_API_KEY}&regions=eu,uk&markets=h2h"
             
             try:
                 resposta = requests.get(url)
@@ -218,41 +237,53 @@ with t1:
                     dados = resposta.json()
                     st.session_state.analisados = []
                     
-                    # Filtra apenas os esportes que tem a palavra 'soccer' (futebol)
-                    jogos_futebol = [d for d in dados if 'soccer' in d.get('sport_key', '')]
+                    # Pega a data de HOJE no horário de Brasília (UTC-3)
+                    hoje_brasil = datetime.utcnow() - timedelta(hours=3)
+                    data_hoje_str = hoje_brasil.strftime("%Y-%m-%d")
                     
-                    # --- FILTRO DE LIGAS FAMOSAS ---
-                    ligas_famosas = [
-                        "soccer_brazil_campeonato", "soccer_brazil_serie_b", 
-                        "soccer_epl", "soccer_uefa_champs_league", 
-                        "soccer_spain_la_liga", "soccer_italy_serie_a", 
-                        "soccer_germany_bundesliga", "soccer_conmebol_libertadores",
-                        "soccer_portugal_primeira_liga"
-                    ]
+                    jogos_do_dia = []
                     
-                    # Separa apenas os jogos das ligas grandes
-                    jogos_filtrados = [j for j in jogos_futebol if j.get('sport_key') in ligas_famosas]
+                    # 1. Filtra para pegar apenas os jogos que acontecem hoje
+                    for jogo in dados:
+                        data_jogo_utc_str = jogo.get('commence_time', '')
+                        if data_jogo_utc_str:
+                            try:
+                                # Converte o horário do jogo para o fuso do Brasil
+                                data_jogo_utc = datetime.strptime(data_jogo_utc_str, "%Y-%m-%dT%H:%M:%SZ")
+                                data_jogo_brasil = data_jogo_utc - timedelta(hours=3)
+                                
+                                # Se a data do jogo for igual a hoje, guarda na lista
+                                if data_jogo_brasil.strftime("%Y-%m-%d") == data_hoje_str:
+                                    jogos_do_dia.append(jogo)
+                            except:
+                                pass
                     
-                    # Se não tiver jogo VIP hoje, puxa a lista geral de futebol
-                    if not jogos_filtrados:
-                        jogos_filtrados = jogos_futebol
-
-                    # Pega os 7 próximos jogos
-                    for jogo in jogos_filtrados[:7]:
+                    # 2. Varre os jogos filtrados de hoje (limitado a 20 para o painel não ficar enorme)
+                    for jogo in jogos_do_dia[:20]:
                         casa = jogo.get('home_team', 'Casa')
                         fora = jogo.get('away_team', 'Fora')
-                        nome_jogo = f"{casa} x {fora}"
+                        
+                        # Pegando o horário para mostrar no painel
+                        hora_jogo = ""
+                        try:
+                            dj_utc = datetime.strptime(jogo.get('commence_time', ''), "%Y-%m-%dT%H:%M:%SZ")
+                            dj_br = dj_utc - timedelta(hours=3)
+                            hora_jogo = dj_br.strftime("%H:%M")
+                        except: pass
+                        
+                        nome_jogo = f"🕒 {hora_jogo} | {casa} x {fora}"
                         odd_vitoria = 0.0
                         
-                        # Extrai a odd real da vitória do time da casa
                         if jogo.get('bookmakers'):
-                            bookie = jogo['bookmakers'][0] # Pega a primeira casa disponível
-                            if bookie.get('markets'):
-                                mercado = bookie['markets'][0]
-                                for out in mercado.get('outcomes', []):
-                                    if out.get('name') == casa: 
-                                        odd_vitoria = out.get('price', 1.5)
-                                        break
+                            for bookie in jogo['bookmakers']:
+                                for mercado in bookie.get('markets', []):
+                                    if mercado.get('key') == 'h2h':
+                                        for out in mercado.get('outcomes', []):
+                                            if out.get('name') == casa: 
+                                                odd_vitoria = out.get('price', 1.5)
+                                                break
+                                        if odd_vitoria > 0: break
+                                if odd_vitoria > 0: break
                                         
                         if odd_vitoria > 0:
                             st.session_state.analisados.append({
@@ -263,9 +294,9 @@ with t1:
                             })
                             
                     if not st.session_state.analisados:
-                        st.warning("Nenhum jogo com odds disponíveis encontrado no momento.")
+                        st.warning(f"Nenhum jogo previsto para HOJE na {liga_selecionada}.")
                 else:
-                    st.error(f"Código do Erro: {resposta.status_code} | Detalhes: {resposta.text}")
+                    st.error(f"Erro {resposta.status_code}: {resposta.text}")
             except Exception as e:
                 st.error(f"Erro de conexão: {e}")
 
