@@ -19,7 +19,7 @@ LINK_CANAL = "https://t.me/+_4ZgNo3xYFo5M2Ex"
 LINK_SUPORTE = "https://wa.me/5561996193390?text=Olá%20RonnyP"
 LINK_CASA_1 = "https://esportiva.bet.br?ref=511e1f11699f"
 
-# SUA CHAVE DA API-SPORTS (CORRETA)
+# SUA CHAVE DA API-SPORTS (CORRETA E ATIVA)
 ODDS_API_KEY = "7d01c19fd029a0f1f529051d6904d21b"
 
 # --- 2. FUNÇÕES DE SISTEMA ---
@@ -207,9 +207,9 @@ with t1:
                     "jogo": j, "m": random.choice(mercados), "o": round(random.uniform(1.5, 2.3), 2), "conf": random.randint(93,99)
                 })
                 
-    # Nova Lógica Integrada (API-SPORTS - Real)
+    # Nova Lógica Integrada (API-SPORTS - Real com Filtro VIP)
     if btn_api:
-        with st.spinner("Puxando jogos e odds reais..."):
+        with st.spinner("Puxando jogos principais e odds reais..."):
             hoje = datetime.now().strftime("%Y-%m-%d")
             # 1. Puxa os jogos do dia que ainda não começaram
             url_fixtures = f"https://v3.football.api-sports.io/fixtures?date={hoje}&status=NS"
@@ -226,10 +226,21 @@ with t1:
                         st.error(f"Erro na conta: {dados['errors']}")
                     else:
                         st.session_state.analisados = []
-                        jogos = dados.get('response', [])
+                        todos_jogos = dados.get('response', [])
                         
-                        # Pegamos os primeiros 5 jogos para não estourar o limite diário gratuito
-                        for jogo in jogos[:5]:
+                        # --- FILTRO DE LIGAS FAMOSAS ---
+                        # 71=Brasil A, 72=Brasil B, 39=Inglaterra, 140=Espanha, 135=Itália, 78=Alemanha, 61=França, 2=Champions, 13=Libertadores
+                        ligas_famosas = [71, 72, 39, 140, 135, 78, 61, 2, 13]
+                        
+                        # Separa apenas os jogos das ligas grandes
+                        jogos_filtrados = [j for j in todos_jogos if j['league']['id'] in ligas_famosas]
+                        
+                        # Se não tiver nenhum jogo de liga famosa hoje, pega os gerais do dia
+                        if not jogos_filtrados:
+                            jogos_filtrados = todos_jogos
+
+                        # Pega até 7 jogos (para não estourar seu limite de 100 requisições/dia)
+                        for jogo in jogos_filtrados[:7]:
                             fix_id = jogo['fixture']['id']
                             casa = jogo['teams']['home']['name']
                             fora = jogo['teams']['away']['name']
@@ -237,7 +248,7 @@ with t1:
                             
                             odd_vitoria = 0.0
                             
-                            # 2. Busca a odd real específica de cada jogo na Bet365 (bookmaker=8)
+                            # 2. Busca a odd real específica na Bet365 (bookmaker=8)
                             try:
                                 url_odds = f"https://v3.football.api-sports.io/odds?fixture={fix_id}&bookmaker=8"
                                 res_odds = requests.get(url_odds, headers=headers).json()
@@ -251,7 +262,7 @@ with t1:
                                                     odd_vitoria = float(valor['odd'])
                                                     break
                             except Exception:
-                                odd_vitoria = round(random.uniform(1.5, 2.5), 2) # Failsafe se não achar a odd
+                                pass # Se der erro de busca na odd, ele apenas pula
                                 
                             if odd_vitoria > 0:
                                 st.session_state.analisados.append({
@@ -262,13 +273,13 @@ with t1:
                                 })
                                 
                         if not st.session_state.analisados:
-                            st.warning("Nenhum jogo de futebol pendente encontrado para o dia de hoje.")
+                            st.warning("Nenhum jogo com odds disponíveis encontrado no momento.")
                 else:
                     st.error(f"Código do Erro: {resposta.status_code} | Verifique sua chave.")
             except Exception as e:
                 st.error(f"Erro de conexão com a internet: {e}")
 
-    # Exibe os jogos
+    # Exibe os jogos (Funciona tanto para o manual quanto para a API)
     for idx, item in enumerate(st.session_state.analisados):
         st.markdown(f"""<div style='background:#0a1626; padding:15px; border-radius:12px; border-left: 5px solid {cor_neon}; margin-bottom:10px;'>
             <div style='color:{cor_neon}; font-weight:bold; font-size:12px;'>🔥 ASSERTIVIDADE IA: {item['conf']}%</div>
@@ -283,7 +294,7 @@ with t2:
     if st.session_state.bilhete:
         odd_f = 1.0
         msg_tg = f"👑 *RONNYP VIP V8* 👑\n\n"
-        msg_whats = "👑 *RONNYP VIP V8* 👑\n\n" 
+        msg_whats = "👑 *RONNYP VIP V8* 👑\n\n" # Texto limpo para WhatsApp
         
         for b in st.session_state.bilhete:
             odd_f *= b['o']
@@ -293,11 +304,13 @@ with t2:
         
         st.markdown(f"### ODD TOTAL: {odd_f:.2f}")
         
+        # --- ENVIAR PARA TELEGRAM ---
         if st.button("ENVIAR PRO TELEGRAM"):
             final_msg_tg = msg_tg + f"📊 *Odd Total: {odd_f:.2f}*\n\n🎰 [APOSTE AQUI]({LINK_CASA_1})"
             asyncio.run(Bot(TOKEN).send_message(CHAT_ID, final_msg_tg, parse_mode='Markdown'))
             st.success("Sinal enviado para o Telegram!")
             
+        # --- COMPARTILHAR NO WHATSAPP ---
         final_msg_whats = msg_whats + f"📊 *Odd Total: {odd_f:.2f}*\n\n🎰 APOSTE AQUI: {LINK_CASA_1}"
         texto_codificado = urllib.parse.quote(final_msg_whats)
         link_zap = f"https://api.whatsapp.com/send?text={texto_codificado}"
