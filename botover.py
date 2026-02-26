@@ -57,13 +57,14 @@ def tocar_som_alerta():
     """
     st.markdown(som_html, unsafe_allow_html=True)
 
-# --- 3. INICIALIZAÇÃO ---
+# --- 3. INICIALIZAÇÃO E ESTADOS ---
 if 'autenticado' not in st.session_state: st.session_state.autenticado = False
 if 'user_nome' not in st.session_state: st.session_state.user_nome = ""
 if 'user_genero' not in st.session_state: st.session_state.user_genero = "Masculino"
 if 'bilhete' not in st.session_state: st.session_state.bilhete = []
 if 'analisados' not in st.session_state: st.session_state.analisados = []
 if 'show_welcome' not in st.session_state: st.session_state.show_welcome = False
+if 'tema_escolhido' not in st.session_state: st.session_state.tema_escolhido = "Padrão (Por Gênero)"
 
 db_keys = carregar_keys()
 
@@ -73,9 +74,25 @@ def valida_chave(chave):
         if datetime.now() < db_keys[chave]: return True, False
     return False, False
 
+# --- CONTROLE DE TEMA NEON (BARRA LATERAL ANTECIPADA) ---
+if st.session_state.autenticado:
+    with st.sidebar:
+        st.markdown("<h4 style='color:white; text-align:center;'>🎨 PERSONALIZAR INTERFACE</h4>", unsafe_allow_html=True)
+        st.session_state.tema_escolhido = st.selectbox(
+            "Escolha seu Neon:", 
+            ["Padrão (Por Gênero)", "🟢 Verde Hacker", "🟡 Ouro Milionário", "🔵 Azul Cyberpunk", "🔴 Vermelho Kamikaze", "🟣 Rosa Choque"]
+        )
+
+# Lógica de Cores Baseada na Escolha
 is_fem = st.session_state.user_genero == "Feminino"
-cor_neon = "#ff00ff" if is_fem else "#00ff88"
-bg_marquee = "#1a001a" if is_fem else "#00120a"
+if st.session_state.tema_escolhido == "🟢 Verde Hacker": cor_neon = "#00ff88"
+elif st.session_state.tema_escolhido == "🟡 Ouro Milionário": cor_neon = "#FFD700"
+elif st.session_state.tema_escolhido == "🔵 Azul Cyberpunk": cor_neon = "#00e5ff"
+elif st.session_state.tema_escolhido == "🔴 Vermelho Kamikaze": cor_neon = "#ff3333"
+elif st.session_state.tema_escolhido == "🟣 Rosa Choque": cor_neon = "#ff00ff"
+else: cor_neon = "#ff00ff" if is_fem else "#00ff88"
+
+bg_marquee = "#1a001a" if cor_neon == "#ff00ff" else "#00120a"
 
 # --- 4. CSS SUPREME E GLASSMORPHISM ---
 st.markdown(f"""
@@ -85,10 +102,7 @@ st.markdown(f"""
     footer {{visibility: hidden !important;}}
     [data-testid="stActionButtonIcon"] {{display: none !important;}}
     
-    @keyframes fadeIn {{
-        from {{ opacity: 0; transform: translateY(10px); }}
-        to {{ opacity: 1; transform: translateY(0); }}
-    }}
+    @keyframes fadeIn {{ from {{ opacity: 0; transform: translateY(10px); }} to {{ opacity: 1; transform: translateY(0); }} }}
     
     .stApp {{ 
         background: radial-gradient(circle at center, #0a1b33 0%, #02060d 100%);
@@ -97,16 +111,12 @@ st.markdown(f"""
     
     .glass-panel {{
         background: rgba(10, 22, 38, 0.45) !important;
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        padding: 20px;
-        margin-bottom: 15px;
-        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 20px; margin-bottom: 15px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         transition: transform 0.3s ease;
     }}
-    .glass-panel:hover {{ transform: translateY(-2px); }}
+    .glass-panel:hover {{ transform: translateY(-2px); border-color: {cor_neon}50; box-shadow: 0 8px 32px 0 {cor_neon}20; }}
     
     header[data-testid="stHeader"] {{ background-color: rgba(2, 6, 13, 0.8) !important; border-bottom: 1px solid {cor_neon}33; backdrop-filter: blur(10px); }}
     .header-destaque {{ text-align: center; padding: 10px; color: {cor_neon}; font-size: 28px; font-weight: 900; text-shadow: 0 0 20px {cor_neon}; margin-top: -20px; letter-spacing: 2px; }}
@@ -121,18 +131,35 @@ st.markdown(f"""
     .stButton>button {{ background: {cor_neon} !important; color: #040d1a !important; font-weight: 900 !important; border-radius: 10px !important; border: none !important; transition: 0.3s; }}
     .stButton>button:hover {{ transform: scale(1.03); box-shadow: 0 0 15px {cor_neon}; }}
     
-    @keyframes pulse-pix {{
-        0% {{ transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.7); }}
-        50% {{ transform: scale(1.05); box-shadow: 0 0 15px 5px rgba(0, 255, 136, 0.4); }}
-        100% {{ transform: scale(1); box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }}
-    }}
-    .btn-pix {{ display: block; padding: 15px; margin-top: 15px; text-align: center; border-radius: 12px; font-weight: 900; text-decoration: none; color: #040d1a !important; font-size: 16px; background-color: #00ff88; animation: pulse-pix 2s infinite; text-transform: uppercase; letter-spacing: 1px; }}
+    @keyframes pulse-pix {{ 0% {{ transform: scale(1); box-shadow: 0 0 0 0 {cor_neon}70; }} 50% {{ transform: scale(1.05); box-shadow: 0 0 15px 5px {cor_neon}40; }} 100% {{ transform: scale(1); box-shadow: 0 0 0 0 {cor_neon}00; }} }}
+    .btn-pix {{ display: block; padding: 15px; margin-top: 15px; text-align: center; border-radius: 12px; font-weight: 900; text-decoration: none; color: #040d1a !important; font-size: 16px; background-color: {cor_neon}; animation: pulse-pix 2s infinite; text-transform: uppercase; letter-spacing: 1px; }}
     
-    /* Cartões Topo */
-    .metric-card {{ background: rgba(10, 22, 38, 0.6); border: 1px solid rgba(255,215,0,0.3); border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 4px 15px rgba(255,215,0,0.1); }}
+    .metric-card {{ background: rgba(10, 22, 38, 0.6); border: 1px solid {cor_neon}30; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 4px 15px {cor_neon}10; transition: 0.3s; }}
+    .metric-card:hover {{ transform: translateY(-5px); border-color: {cor_neon}; }}
     .metric-title {{ color: #bbb; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }}
-    .metric-value {{ color: #FFD700; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px rgba(255,215,0,0.5); margin-top: 5px; }}
+    .metric-value {{ color: {cor_neon}; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px {cor_neon}50; margin-top: 5px; }}
+
+    /* RECURSO PREMIUM: NOTIFICAÇÃO FLUTUANTE (POP-UP) PURE CSS */
+    @keyframes popup-anim {{
+        0%, 100% {{ bottom: -100px; opacity: 0; }}
+        10%, 90% {{ bottom: 20px; opacity: 1; }}
+    }}
+    @keyframes text-carousel {{
+        0% {{ content: "🔥 Marcos M. acabou de gerar uma Dupla Segura!"; border-left-color: {cor_neon}; }}
+        33% {{ content: "💰 Saque de R$ 850,00 realizado por Ana"; border-left-color: #FFD700; }}
+        66% {{ content: "🚨 Lucas ativou o Modo Kamikaze"; border-left-color: #ff3333; }}
+        100% {{ content: "✅ O VIP bateu 3 Greens seguidos hoje!"; border-left-color: #00ff88; }}
+    }}
+    .toast-flutuante {{
+        position: fixed; right: 20px; background: rgba(10, 22, 38, 0.95); color: white;
+        padding: 15px 25px; border-radius: 10px; border-left: 5px solid {cor_neon};
+        box-shadow: 0 5px 20px rgba(0,0,0,0.8); z-index: 9999;
+        animation: popup-anim 15s infinite; font-weight: bold; backdrop-filter: blur(5px);
+    }}
+    .toast-flutuante::after {{ content: ""; animation: text-carousel 60s infinite steps(1); }}
     </style>
+    
+    <div class="toast-flutuante"></div>
     """, unsafe_allow_html=True)
 
 # --- 5. TELA DE LOGIN ---
@@ -175,15 +202,32 @@ if st.session_state.show_welcome:
 # --- 7. MENU LATERAL & ADMIN ---
 with st.sidebar:
     st.markdown("<div class='glass-panel' style='text-align: center; padding: 15px;'>", unsafe_allow_html=True)
-    st.markdown(f"<h3 style='color:#FFD700; margin-bottom: 0; text-shadow: 0 0 10px #FFD700;'>👑 CEO & FOUNDER</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='color:{cor_neon}; margin-bottom: 0; text-shadow: 0 0 10px {cor_neon};'>👑 CEO & FOUNDER</h3>", unsafe_allow_html=True)
     st.markdown("<p style='color:#bbb; font-size:14px;'>Ronny P. | Especialista em IA</p>", unsafe_allow_html=True)
+    
+    # RECURSO PREMIUM: INSTAGRAM + TIKTOK (Geração de Autoridade)
     st.markdown(f'<a href="https://instagram.com/ronny_olivzz61" target="_blank" class="btn-side" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); border-radius: 30px;">📸 SIGA @ronny_olivzz61</a>', unsafe_allow_html=True)
+    st.markdown(f'<a href="https://tiktok.com/@ronny.p061" target="_blank" class="btn-side" style="background: #000; border: 1px solid {cor_neon}; border-radius: 30px;">🎵 SIGA @ronny.p061 no TikTok</a>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
     
     st.markdown(f"<p style='text-align:center; font-size: 18px;'>👤 Bem-vindo(a), <b>{st.session_state.user_nome}</b></p>", unsafe_allow_html=True)
     
+    # RECURSO PREMIUM: RÁDIO LOFI DE FOCO PARA OPERAÇÕES
+    st.markdown("---")
+    st.markdown(f"<h4 style='color:{cor_neon}; text-align:center;'>🎧 RÁDIO FOCO VIP</h4>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#bbb; font-size:12px;'>Dê Play e foque nas análises!</p>", unsafe_allow_html=True)
+    lofi_player = """
+    <div style="display:flex; justify-content:center; align-items:center; width:100%;">
+        <audio controls loop style="width: 100%; height: 35px; border-radius: 10px; opacity: 0.8;">
+            <source src="https://assets.mixkit.co/active_storage/sfx/135/135-preview.mp3" type="audio/mpeg">
+        </audio>
+    </div>
+    """
+    st.markdown(lofi_player, unsafe_allow_html=True)
+    
+    st.markdown("---")
     st.subheader("🔗 ACESSOS RÁPIDOS")
-    st.markdown(f'<a href="{LINK_CASA_1}" target="_blank" class="btn-side" style="background: #FFD700; color: #000 !important;">🎰 CASA RECOMENDADA</a>', unsafe_allow_html=True)
+    st.markdown(f'<a href="{LINK_CASA_1}" target="_blank" class="btn-side" style="background: {cor_neon}; color: #000 !important;">🎰 CASA RECOMENDADA</a>', unsafe_allow_html=True)
     st.markdown(f'<a href="{LINK_SUPORTE}" target="_blank" class="btn-side" style="background: #25d366;">🟢 SUPORTE WHATSAPP</a>', unsafe_allow_html=True)
     st.markdown(f'<a href="{LINK_CANAL}" target="_blank" class="btn-side" style="background: #0088cc;">🔵 CANAL TELEGRAM</a>', unsafe_allow_html=True)
     
@@ -225,15 +269,13 @@ with st.sidebar:
         st.rerun()
 
 # --- 8. DASHBOARD E SISTEMA PREMIUM ---
-
-# Painel de Métricas (Dashboard de Topo)
 c1, c2, c3 = st.columns(3)
 with c1:
-    st.markdown("<div class='metric-card'><div class='metric-title'>Win Rate IA (30D)</div><div class='metric-value'>89.4%</div></div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='metric-card'><div class='metric-title'>Win Rate IA (30D)</div><div class='metric-value'>89.4%</div></div>", unsafe_allow_html=True)
 with c2:
-    st.markdown("<div class='metric-card'><div class='metric-title'>Jogos Analisados</div><div class='metric-value'>1.248</div></div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='metric-card'><div class='metric-title'>Jogos Analisados</div><div class='metric-value'>1.248</div></div>", unsafe_allow_html=True)
 with c3:
-    st.markdown("<div class='metric-card'><div class='metric-title'>Oportunidades Hoje</div><div class='metric-value'>14 Ativas</div></div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='metric-card'><div class='metric-title'>Oportunidades Hoje</div><div class='metric-value'>14 Ativas</div></div>", unsafe_allow_html=True)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
@@ -251,8 +293,6 @@ LIGAS_DISPONIVEIS = {
 }
 
 with t1:
-    
-    # MODO MANUAL OCULTO (EXPANDER) - Visual Limpo
     with st.expander("✍️ MODO MANUAL: Inserir Grade de Jogos"):
         grade = st.text_area("Cole aqui a sua lista de jogos:", height=150)
         if st.button("🔍 INICIAR ANÁLISE MANUAL", use_container_width=True):
@@ -439,10 +479,10 @@ with t2:
             
         st.markdown(f"<div style='background-color: {risco_cor}20; border: 1px solid {risco_cor}; padding: 12px; border-radius: 8px; text-align: center; color: {risco_cor}; font-weight: bold; margin-bottom: 20px; box-shadow: 0 0 10px {risco_cor}40;'>{risco_txt}</div>", unsafe_allow_html=True)
         
-        st.markdown("<div class='glass-panel' style='border: 1px solid #FFD700;'>", unsafe_allow_html=True)
+        st.markdown(f"<div class='glass-panel' style='border: 1px solid {cor_neon};'>", unsafe_allow_html=True)
         valor_aposta = st.number_input("💸 Qual o valor que deseja investir? (R$):", min_value=1.0, value=10.0, step=5.0)
         retorno_esperado = valor_aposta * odd_f
-        st.markdown(f"<h2 style='color:#FFD700; text-align:center; text-shadow: 0 0 15px #FFD700; margin-top: 10px;'>🤑 RETORNO: R$ {retorno_esperado:.2f}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='color:{cor_neon}; text-align:center; text-shadow: 0 0 15px {cor_neon}; margin-top: 10px;'>🤑 RETORNO: R$ {retorno_esperado:.2f}</h2>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
         
         final_msg_tg = msg_tg + f"📊 *Odd Total: {odd_f:.2f}*\n💸 *Aposta:* R$ {valor_aposta:.2f}\n🤑 *Retorno:* R$ {retorno_esperado:.2f}\n\n🎰 [APOSTE AQUI]({LINK_CASA_1})"
@@ -482,9 +522,9 @@ with t3:
     
     for h in historico:
         st.markdown(f"""
-        <div class='glass-panel' style='border-left: 5px solid #00ff88; padding: 15px;'>
+        <div class='glass-panel' style='border-left: 5px solid {cor_neon}; padding: 15px;'>
             <div style='color:white; font-weight:bold; font-size: 16px;'>{h['j']}</div>
-            <div style='color:#bbb; font-size: 14px; margin-top:5px;'>🎯 {h['m']} | <span style='color:#00ff88; font-weight:bold; font-size: 16px;'>@{h['o']} ✅ GREEN</span></div>
+            <div style='color:#bbb; font-size: 14px; margin-top:5px;'>🎯 {h['m']} | <span style='color:{cor_neon}; font-weight:bold; font-size: 16px;'>@{h['o']} ✅ GREEN</span></div>
         </div>
         """, unsafe_allow_html=True)
         
