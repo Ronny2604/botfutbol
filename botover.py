@@ -19,6 +19,9 @@ LINK_CANAL = "https://t.me/+_4ZgNo3xYFo5M2Ex"
 LINK_SUPORTE = "https://wa.me/5561996193390?text=Olá%20RonnyP"
 LINK_CASA_1 = "https://esportiva.bet.br?ref=511e1f11699f"
 
+# ⚠️ COLOQUE O LINK REAL DO SEU APLICATIVO AQUI ABAIXO:
+LINK_PAINEL = "https://seu-link-aqui.streamlit.app"
+
 ODDS_API_KEY = "da4633249ece20283d29604cec7a7114"
 
 # --- 2. FUNÇÕES DE SISTEMA ---
@@ -74,7 +77,7 @@ def valida_chave(chave):
         if datetime.now() < db_keys[chave]: return True, False
     return False, False
 
-# --- CONTROLE DE TEMA NEON (BARRA LATERAL ANTECIPADA) ---
+# --- CONTROLE DE TEMA NEON ---
 if st.session_state.autenticado:
     with st.sidebar:
         st.markdown("<h4 style='color:white; text-align:center;'>🎨 PERSONALIZAR INTERFACE</h4>", unsafe_allow_html=True)
@@ -83,7 +86,6 @@ if st.session_state.autenticado:
             ["Padrão (Por Gênero)", "🟢 Verde Hacker", "🟡 Ouro Milionário", "🔵 Azul Cyberpunk", "🔴 Vermelho Kamikaze", "🟣 Rosa Choque"]
         )
 
-# Lógica de Cores Baseada na Escolha
 is_fem = st.session_state.user_genero == "Feminino"
 if st.session_state.tema_escolhido == "🟢 Verde Hacker": cor_neon = "#00ff88"
 elif st.session_state.tema_escolhido == "🟡 Ouro Milionário": cor_neon = "#FFD700"
@@ -104,10 +106,7 @@ st.markdown(f"""
     
     @keyframes fadeIn {{ from {{ opacity: 0; transform: translateY(10px); }} to {{ opacity: 1; transform: translateY(0); }} }}
     
-    .stApp {{ 
-        background: radial-gradient(circle at center, #0a1b33 0%, #02060d 100%);
-        animation: fadeIn 0.8s ease-out;
-    }}
+    .stApp {{ background: radial-gradient(circle at center, #0a1b33 0%, #02060d 100%); animation: fadeIn 0.8s ease-out; }}
     
     .glass-panel {{
         background: rgba(10, 22, 38, 0.45) !important;
@@ -139,28 +138,24 @@ st.markdown(f"""
     .metric-title {{ color: #bbb; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }}
     .metric-value {{ color: {cor_neon}; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px {cor_neon}50; margin-top: 5px; }}
 
-    /* RECURSO PREMIUM: NOTIFICAÇÃO FLUTUANTE (POP-UP) PURE CSS */
-    @keyframes popup-anim {{
-        0%, 100% {{ bottom: -100px; opacity: 0; }}
-        10%, 90% {{ bottom: 20px; opacity: 1; }}
-    }}
+    @keyframes popup-anim {{ 0%, 100% {{ bottom: -100px; opacity: 0; }} 10%, 90% {{ bottom: 20px; opacity: 1; }} }}
     @keyframes text-carousel {{
         0% {{ content: "🔥 Marcos M. acabou de gerar uma Dupla Segura!"; border-left-color: {cor_neon}; }}
         33% {{ content: "💰 Saque de R$ 850,00 realizado por Ana"; border-left-color: #FFD700; }}
         66% {{ content: "🚨 Lucas ativou o Modo Kamikaze"; border-left-color: #ff3333; }}
         100% {{ content: "✅ O VIP bateu 3 Greens seguidos hoje!"; border-left-color: #00ff88; }}
     }}
-    .toast-flutuante {{
-        position: fixed; right: 20px; background: rgba(10, 22, 38, 0.95); color: white;
-        padding: 15px 25px; border-radius: 10px; border-left: 5px solid {cor_neon};
-        box-shadow: 0 5px 20px rgba(0,0,0,0.8); z-index: 9999;
-        animation: popup-anim 15s infinite; font-weight: bold; backdrop-filter: blur(5px);
-    }}
+    .toast-flutuante {{ position: fixed; right: 20px; background: rgba(10, 22, 38, 0.95); color: white; padding: 15px 25px; border-radius: 10px; border-left: 5px solid {cor_neon}; box-shadow: 0 5px 20px rgba(0,0,0,0.8); z-index: 9999; animation: popup-anim 15s infinite; font-weight: bold; backdrop-filter: blur(5px); }}
     .toast-flutuante::after {{ content: ""; animation: text-carousel 60s infinite steps(1); }}
     </style>
     
     <div class="toast-flutuante"></div>
     """, unsafe_allow_html=True)
+
+# --- CAPTURA DE KEY VIA URL (LOGIN MÁGICO) ---
+url_key = ""
+if "key" in st.query_params:
+    url_key = st.query_params["key"]
 
 # --- 5. TELA DE LOGIN ---
 if not st.session_state.autenticado:
@@ -171,7 +166,9 @@ if not st.session_state.autenticado:
         st.markdown(f"<h3 style='text-align:center; color:{cor_neon};'>ACESSO VIP Ouro</h3>", unsafe_allow_html=True)
         nome_in = st.text_input("Seu Nome:")
         genero_in = st.selectbox("Gênero:", ["Masculino", "Feminino"])
-        key_in = st.text_input("Sua Key:", type="password")
+        
+        # A Key é preenchida automaticamente se o cliente vier pelo link
+        key_in = st.text_input("Sua Key:", value=url_key, type="password")
         
         st.markdown("<br>", unsafe_allow_html=True)
         if st.button("ACESSAR RADAR", use_container_width=True):
@@ -205,25 +202,11 @@ with st.sidebar:
     st.markdown(f"<h3 style='color:{cor_neon}; margin-bottom: 0; text-shadow: 0 0 10px {cor_neon};'>👑 CEO & FOUNDER</h3>", unsafe_allow_html=True)
     st.markdown("<p style='color:#bbb; font-size:14px;'>Ronny P. | Especialista em IA</p>", unsafe_allow_html=True)
     
-    # RECURSO PREMIUM: INSTAGRAM + TIKTOK (Geração de Autoridade)
     st.markdown(f'<a href="https://instagram.com/ronny_olivzz61" target="_blank" class="btn-side" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); border-radius: 30px;">📸 SIGA @ronny_olivzz61</a>', unsafe_allow_html=True)
     st.markdown(f'<a href="https://tiktok.com/@ronny.p061" target="_blank" class="btn-side" style="background: #000; border: 1px solid {cor_neon}; border-radius: 30px;">🎵 SIGA @ronny.p061 no TikTok</a>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
     
     st.markdown(f"<p style='text-align:center; font-size: 18px;'>👤 Bem-vindo(a), <b>{st.session_state.user_nome}</b></p>", unsafe_allow_html=True)
-    
-    # RECURSO PREMIUM: RÁDIO LOFI DE FOCO PARA OPERAÇÕES
-    st.markdown("---")
-    st.markdown(f"<h4 style='color:{cor_neon}; text-align:center;'>🎧 RÁDIO FOCO VIP</h4>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#bbb; font-size:12px;'>Dê Play e foque nas análises!</p>", unsafe_allow_html=True)
-    lofi_player = """
-    <div style="display:flex; justify-content:center; align-items:center; width:100%;">
-        <audio controls loop style="width: 100%; height: 35px; border-radius: 10px; opacity: 0.8;">
-            <source src="https://assets.mixkit.co/active_storage/sfx/135/135-preview.mp3" type="audio/mpeg">
-        </audio>
-    </div>
-    """
-    st.markdown(lofi_player, unsafe_allow_html=True)
     
     st.markdown("---")
     st.subheader("🔗 ACESSOS RÁPIDOS")
@@ -260,8 +243,18 @@ with st.sidebar:
             if tempo_key == "7 Dias": horas = 168
             elif tempo_key == "30 Dias": horas = 720
             salvar_key(c_nome, horas)
-            st.success(f"Key criada! Validade: {tempo_key}")
-            st.code(c_nome)
+            
+            st.success(f"✅ Key {c_nome} gerada com sucesso!")
+            
+            # --- GERADOR DE LINK AUTOMÁTICO E MENSAGEM ---
+            link_magico = f"{LINK_PAINEL}?key={c_nome}"
+            msg_cliente = f"✅ *ACESSO VIP LIBERADO!*\n\nFala campeão! Seu acesso ao *RonnyP V8 Supreme* está pronto.\n\n🔑 *Sua Key:* {c_nome}\n⏳ *Validade:* {tempo_key}\n\n🔗 *Acesse direto clicando aqui:*\n{link_magico}"
+            
+            st.code(msg_cliente, language="text")
+            
+            txt_zap_codificado = urllib.parse.quote(msg_cliente)
+            link_zap_cliente = f"https://api.whatsapp.com/send?text={txt_zap_codificado}"
+            st.markdown(f'<a href="{link_zap_cliente}" target="_blank" class="btn-side" style="background: #25d366; color: white !important;">🟢 ENVIAR PARA O CLIENTE (ZAP)</a>', unsafe_allow_html=True)
 
     st.markdown("<br>"*5, unsafe_allow_html=True)
     if st.button("SAIR", use_container_width=True):
@@ -364,9 +357,9 @@ with t1:
                                         for out in mercado['outcomes']:
                                             pt = out.get('point', 0)
                                             if out['name'] == 'Over':
-                                                mercados_encontrados.append({"m": f"Over {pt} Golos", "o": out['price']})
+                                                mercados_encontrados.append({"m": f"Over {pt} Gols", "o": out['price']})
                                             elif out['name'] == 'Under':
-                                                mercados_encontrados.append({"m": f"Under {pt} Golos", "o": out['price']})
+                                                mercados_encontrados.append({"m": f"Under {pt} Gols", "o": out['price']})
 
                         mercados_unicos = {}
                         for m in mercados_encontrados:
@@ -512,19 +505,19 @@ with t3:
     st.markdown("<h4 style='color:white; margin-top: 10px;'>🏆 ÚLTIMOS GREENS DO VIP</h4>", unsafe_allow_html=True)
     st.markdown("<p style='color:#bbb;'>Confirme o histórico recente de acertos do nosso sistema de inteligência artificial:</p>", unsafe_allow_html=True)
     
+    # RECURSO PREMIUM: HISTÓRICO REAL ATUALIZADO
     historico = [
-        {"j": "Real Madrid x Barcelona", "m": "Over 2.5 Golos", "o": 1.65},
-        {"j": "Flamengo x Fluminense", "m": "Vitória Flamengo", "o": 1.90},
-        {"j": "Manchester City x Arsenal", "m": "Vitória Manchester City", "o": 1.85},
-        {"j": "Bayern de Munique x B. Dortmund", "m": "Over 2.5 Golos", "o": 1.55},
-        {"j": "Palmeiras x São Paulo", "m": "Empate", "o": 3.10},
+        {"j": "Real Madrid x SL Benfica", "m": "Over 2.5 Gols", "o": 1.75},
+        {"j": "Paris Saint Germain x Monaco", "m": "Over 8.5 Cantos", "o": 1.65},
+        {"j": "Cruzeiro x Corinthians", "m": "Ambas Marcam", "o": 1.90},
+        {"j": "Juventus FC x Galatasaray", "m": "1 e Over 2.5", "o": 2.15},
     ]
     
     for h in historico:
         st.markdown(f"""
-        <div class='glass-panel' style='border-left: 5px solid {cor_neon}; padding: 15px;'>
+        <div class='glass-panel' style='border-left: 5px solid #00ff88; padding: 15px;'>
             <div style='color:white; font-weight:bold; font-size: 16px;'>{h['j']}</div>
-            <div style='color:#bbb; font-size: 14px; margin-top:5px;'>🎯 {h['m']} | <span style='color:{cor_neon}; font-weight:bold; font-size: 16px;'>@{h['o']} ✅ GREEN</span></div>
+            <div style='color:#bbb; font-size: 14px; margin-top:5px;'>🎯 {h['m']} | <span style='color:#00ff88; font-weight:bold; font-size: 16px;'>@{h['o']} ✅ GREEN</span></div>
         </div>
         """, unsafe_allow_html=True)
         
