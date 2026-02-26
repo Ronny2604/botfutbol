@@ -8,6 +8,13 @@ import requests
 from telegram import Bot
 from datetime import datetime, timedelta
 
+# --- CONFIGURAÇÕES PESSOAIS DO CEO (EDITE AQUI!) ---
+LINK_PAINEL = "https://seu-link-aqui.streamlit.app" # Seu link Streamlit
+# LINK DA SUA IMAGEM DO GITHUB (VERSÃO RAW PARA FUNCIONAR O FUNDO)
+LINK_SUA_IMAGEM_DE_FUNDO = "https://raw.githubusercontent.com/Ronny2604/botfutbol/main/photo_5172618853803035536_c.png"
+# Coloque o link direto do seu áudio (mp3) diário abaixo. Usei um de exemplo.
+LINK_SEU_AUDIO_BRIEFING = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" 
+
 # --- 1. CONFIGURAÇÃO E SEGURANÇA ---
 st.set_page_config(page_title="RonnyP V8 SUPREME", layout="wide", initial_sidebar_state="expanded")
 
@@ -18,9 +25,6 @@ CHAT_ID = '-1003799258159'
 LINK_CANAL = "https://t.me/+_4ZgNo3xYFo5M2Ex"
 LINK_SUPORTE = "https://wa.me/5561996193390?text=Olá%20RonnyP"
 LINK_CASA_1 = "https://esportiva.bet.br?ref=511e1f11699f"
-
-# ⚠️ COLOQUE O LINK REAL DO SEU APLICATIVO AQUI ABAIXO:
-LINK_PAINEL = "https://seu-link-aqui.streamlit.app"
 
 ODDS_API_KEY = "da4633249ece20283d29604cec7a7114"
 
@@ -60,6 +64,12 @@ def tocar_som_alerta():
     """
     st.markdown(som_html, unsafe_allow_html=True)
 
+def get_saudacao():
+    hora = datetime.now().hour
+    if 5 <= hora < 12: return "☕ Bom dia"
+    elif 12 <= hora < 18: return "☀️ Boa tarde"
+    else: return "🌙 Boa noite"
+
 # --- 3. INICIALIZAÇÃO E ESTADOS ---
 if 'autenticado' not in st.session_state: st.session_state.autenticado = False
 if 'user_nome' not in st.session_state: st.session_state.user_nome = ""
@@ -96,7 +106,7 @@ else: cor_neon = "#ff00ff" if is_fem else "#00ff88"
 
 bg_marquee = "#1a001a" if cor_neon == "#ff00ff" else "#00120a"
 
-# --- 4. CSS SUPREME E GLASSMORPHISM ---
+# --- 4. CSS SUPREME, GLASSMORPHISM E FUNDO PERSONALIZADO ---
 st.markdown(f"""
     <style>
     #MainMenu {{visibility: hidden !important;}}
@@ -106,13 +116,21 @@ st.markdown(f"""
     
     @keyframes fadeIn {{ from {{ opacity: 0; transform: translateY(10px); }} to {{ opacity: 1; transform: translateY(0); }} }}
     
-    .stApp {{ background: radial-gradient(circle at center, #0a1b33 0%, #02060d 100%); animation: fadeIn 0.8s ease-out; }}
+    /* AQUI ESTÁ A MÁGICA DO FUNDO COM A SUA IMAGEM */
+    .stApp {{ 
+        /* O primeiro 'linear-gradient' cria a máscara escura sobre a imagem */
+        background: linear-gradient(rgba(10, 27, 51, 0.85), rgba(2, 6, 13, 0.95)), url('{LINK_SUA_IMAGEM_DE_FUNDO}');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        animation: fadeIn 0.8s ease-out;
+    }}
     
     .glass-panel {{
-        background: rgba(10, 22, 38, 0.45) !important;
-        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-        border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.08);
-        padding: 20px; margin-bottom: 15px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        background: rgba(10, 22, 38, 0.55) !important; /* Um pouco mais escuro para contraste */
+        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+        border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 20px; margin-bottom: 15px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
         transition: transform 0.3s ease;
     }}
     .glass-panel:hover {{ transform: translateY(-2px); border-color: {cor_neon}50; box-shadow: 0 8px 32px 0 {cor_neon}20; }}
@@ -190,7 +208,8 @@ itens_marquee = "".join([f"<div class='marquee-item'> 🔥 {n} ENTROU NO VIP </d
 st.markdown(f"<div class='marquee-wrapper'><div class='marquee-content'>{itens_marquee}{itens_marquee}</div></div>", unsafe_allow_html=True)
 
 if st.session_state.show_welcome:
-    st.toast(f"Bem-vindo(a) ao nível Supreme, {st.session_state.user_nome}! 💰")
+    saudacao = get_saudacao()
+    st.toast(f"{saudacao}, {st.session_state.user_nome}! Vamos aos lucros! 💰")
     tocar_som_moeda()
     st.balloons()
     st.session_state.show_welcome = False
@@ -205,10 +224,17 @@ with st.sidebar:
     st.markdown(f'<a href="https://tiktok.com/@ronny.p061" target="_blank" class="btn-side" style="background: #000; border: 1px solid {cor_neon}; border-radius: 30px;">🎵 SIGA @ronny.p061 no TikTok</a>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
     
-    # RECURSO PREMIUM: SELO VIP DIAMANTE
-    st.markdown(f"<p style='text-align:center; font-size: 18px; margin-bottom: 5px;'>👤 Bem-vindo(a), <b>{st.session_state.user_nome}</b></p>", unsafe_allow_html=True)
+    # SAUDAÇÃO DINÂMICA
+    saudacao_sidebar = get_saudacao()
+    st.markdown(f"<p style='text-align:center; font-size: 18px; margin-bottom: 5px;'>{saudacao_sidebar}, <b>{st.session_state.user_nome}</b></p>", unsafe_allow_html=True)
     st.markdown(f"<div style='text-align:center; margin-bottom: 20px;'><span style='background-color:rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; color:{cor_neon}; font-size: 12px; font-weight:bold; border: 1px solid {cor_neon}; box-shadow: 0 0 10px {cor_neon}50;'>💎 VIP DIAMANTE</span></div>", unsafe_allow_html=True)
     
+    # RECURSO PREMIUM: ÁUDIO BRIEFING DO CEO
+    st.markdown("---")
+    st.markdown(f"<h4 style='color:{cor_neon}; text-align:center; margin-bottom:5px;'>🎙️ BRIEFING DIÁRIO DO CEO</h4>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#bbb; font-size:12px;'>Ouça as instruções do Ronny para hoje:</p>", unsafe_allow_html=True)
+    st.audio(LINK_SEU_AUDIO_BRIEFING, format="audio/mp3")
+
     st.markdown("---")
     st.subheader("🔗 ACESSOS RÁPIDOS")
     st.markdown(f'<a href="{LINK_CASA_1}" target="_blank" class="btn-side" style="background: {cor_neon}; color: #000 !important;">🎰 CASA RECOMENDADA</a>', unsafe_allow_html=True)
@@ -436,7 +462,6 @@ with t1:
                 atk = random.randint(75, 99)
                 dfs = random.randint(65, 95)
                 
-                # --- BLOCO HTML COMPACTADO PARA EVITAR BUG DO MARKDOWN ---
                 html_card = (
                     f"<div class='glass-panel' style='border-left: 5px solid {cor_neon}; padding: 15px;'>"
                     f"<div style='color:{cor_neon}; font-weight:bold; font-size:12px; margin-bottom: 5px; text-transform: uppercase;'>🔥 IA Confidence: {item['conf']}%</div>"
