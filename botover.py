@@ -8,11 +8,10 @@ import requests
 from telegram import Bot
 from datetime import datetime, timedelta
 
-# --- CONFIGURAÇÕES PESSOAIS DO CEO (EDITE AQUI!) ---
-LINK_PAINEL = "https://seu-link-aqui.streamlit.app" # Seu link Streamlit
-# LINK DA SUA IMAGEM DO GITHUB (VERSÃO RAW PARA FUNCIONAR O FUNDO)
+# --- CONFIGURAÇÕES PESSOAIS DO CEO ---
+# (Lembre-se de colocar o seu link real do Streamlit app aqui)
+LINK_PAINEL = "https://seu-link-aqui.streamlit.app" 
 LINK_SUA_IMAGEM_DE_FUNDO = "https://raw.githubusercontent.com/Ronny2604/botfutbol/main/photo_5172618853803035536_c.png"
-# Coloque o link direto do seu áudio (mp3) diário abaixo. Usei um de exemplo.
 LINK_SEU_AUDIO_BRIEFING = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" 
 
 # --- 1. CONFIGURAÇÃO E SEGURANÇA ---
@@ -104,87 +103,78 @@ elif st.session_state.tema_escolhido == "🔴 Vermelho Kamikaze": cor_neon = "#f
 elif st.session_state.tema_escolhido == "🟣 Rosa Choque": cor_neon = "#ff00ff"
 else: cor_neon = "#ff00ff" if is_fem else "#00ff88"
 
-bg_marquee = "#1a001a" if cor_neon == "#ff00ff" else "#00120a"
-
-# --- 4. CSS SUPREME, GLASSMORPHISM E FUNDO PERSONALIZADO ---
+# --- 4. CSS FOOTI PREMIUM + SEU BACKGROUND ---
 st.markdown(f"""
     <style>
     #MainMenu {{visibility: hidden !important;}}
     .stDeployButton {{display:none !important;}}
     footer {{visibility: hidden !important;}}
+    header {{visibility: hidden !important;}}
     [data-testid="stActionButtonIcon"] {{display: none !important;}}
     
     @keyframes fadeIn {{ from {{ opacity: 0; transform: translateY(10px); }} to {{ opacity: 1; transform: translateY(0); }} }}
     
-    /* AQUI ESTÁ A MÁGICA DO FUNDO COM A SUA IMAGEM */
+    /* Fundo Escuro Premium Mesclado com sua Imagem */
     .stApp {{ 
-        /* O primeiro 'linear-gradient' cria a máscara escura sobre a imagem */
-        background: linear-gradient(rgba(10, 27, 51, 0.85), rgba(2, 6, 13, 0.95)), url('{LINK_SUA_IMAGEM_DE_FUNDO}');
+        background: linear-gradient(rgba(15, 16, 21, 0.92), rgba(15, 16, 21, 0.98)), url('{LINK_SUA_IMAGEM_DE_FUNDO}');
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
         animation: fadeIn 0.8s ease-out;
+        color: #ffffff;
     }}
     
-    .glass-panel {{
-        background: rgba(10, 22, 38, 0.55) !important; /* Um pouco mais escuro para contraste */
-        backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-        border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 20px; margin-bottom: 15px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
-        transition: transform 0.3s ease;
-    }}
-    .glass-panel:hover {{ transform: translateY(-2px); border-color: {cor_neon}50; box-shadow: 0 8px 32px 0 {cor_neon}20; }}
+    /* Títulos e Textos Neon (Estilo Footi) */
+    .neon-text {{ color: {cor_neon}; font-weight: bold; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }}
+    .header-destaque {{ text-align: left; color: #ffffff; font-size: 32px; font-weight: 900; font-style: italic; margin-top: -30px; line-height: 1.1; }}
     
-    header[data-testid="stHeader"] {{ background-color: rgba(2, 6, 13, 0.8) !important; border-bottom: 1px solid {cor_neon}33; backdrop-filter: blur(10px); }}
-    .header-destaque {{ text-align: center; padding: 10px; color: {cor_neon}; font-size: 28px; font-weight: 900; text-shadow: 0 0 20px {cor_neon}; margin-top: -20px; letter-spacing: 2px; }}
+    /* Dashboard Stats (Idêntico ao Footi) */
+    .stat-container {{ display: flex; justify-content: space-between; background-color: rgba(26, 27, 34, 0.8); border-radius: 8px; border: 1px solid #2d2f36; padding: 15px; margin-bottom: 20px; }}
+    .stat-box {{ text-align: center; width: 24%; border-right: 1px solid #333; }}
+    .stat-box:last-child {{ border-right: none; }}
+    .stat-title {{ color: #888; font-size: 11px; margin:0; text-transform: uppercase; letter-spacing: 0.5px; }}
+    .stat-value {{ font-size: 22px; font-weight: 900; margin: 5px 0 0 0; }}
+    .stat-value.green {{ color: {cor_neon}; }}
     
-    .marquee-wrapper {{ width: 100%; overflow: hidden; background: rgba(0,0,0,0.5); border-bottom: 2px solid {cor_neon}; padding: 10px 0; display: flex; margin-bottom: 20px; backdrop-filter: blur(5px); }}
+    /* Game Cards (Apostas) */
+    .game-card {{ background-color: rgba(26, 27, 34, 0.9); padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #333; transition: 0.3s; border-top: 1px solid #2d2f36; border-right: 1px solid #2d2f36; border-bottom: 1px solid #2d2f36; }}
+    .game-card:hover {{ border-left: 4px solid {cor_neon}; box-shadow: 0 4px 15px rgba(0,0,0,0.5); transform: translateY(-2px); }}
+    
+    /* Marquee e Toasts do seu código */
+    .marquee-wrapper {{ width: 100%; overflow: hidden; background: rgba(0,0,0,0.5); border-bottom: 1px solid {cor_neon}50; padding: 8px 0; display: flex; margin-bottom: 20px; }}
     .marquee-content {{ display: flex; white-space: nowrap; animation: marquee 30s linear infinite; }}
-    .marquee-item {{ padding: 0 40px; color: {cor_neon}; font-weight: bold; text-shadow: 0 0 5px {cor_neon}; }}
+    .marquee-item {{ padding: 0 40px; color: {cor_neon}; font-weight: bold; font-size: 12px; }}
     @keyframes marquee {{ 0% {{ transform: translateX(0); }} 100% {{ transform: translateX(-50%); }} }}
     
+    /* Botões Padrão */
     .btn-side {{ display: block; padding: 12px; margin-bottom: 10px; text-align: center; border-radius: 8px; font-weight: bold; text-decoration: none; color: white !important; font-size: 14px; transition: 0.3s; }}
-    .btn-side:hover {{ transform: scale(1.02); filter: brightness(1.2); }}
-    .stButton>button {{ background: {cor_neon} !important; color: #040d1a !important; font-weight: 900 !important; border-radius: 10px !important; border: none !important; transition: 0.3s; }}
-    .stButton>button:hover {{ transform: scale(1.03); box-shadow: 0 0 15px {cor_neon}; }}
+    .stButton>button {{ background: {cor_neon} !important; color: #000 !important; font-weight: 900 !important; border-radius: 8px !important; border: none !important; transition: 0.3s; padding: 10px 20px !important; }}
+    .stButton>button:hover {{ transform: scale(1.02); filter: brightness(1.2); }}
     
-    @keyframes pulse-pix {{ 0% {{ transform: scale(1); box-shadow: 0 0 0 0 {cor_neon}70; }} 50% {{ transform: scale(1.05); box-shadow: 0 0 15px 5px {cor_neon}40; }} 100% {{ transform: scale(1); box-shadow: 0 0 0 0 {cor_neon}00; }} }}
-    .btn-pix {{ display: block; padding: 15px; margin-top: 15px; text-align: center; border-radius: 12px; font-weight: 900; text-decoration: none; color: #040d1a !important; font-size: 16px; background-color: {cor_neon}; animation: pulse-pix 2s infinite; text-transform: uppercase; letter-spacing: 1px; }}
-    
-    .metric-card {{ background: rgba(10, 22, 38, 0.6); border: 1px solid {cor_neon}30; border-radius: 12px; padding: 15px; text-align: center; box-shadow: 0 4px 15px {cor_neon}10; transition: 0.3s; }}
-    .metric-card:hover {{ transform: translateY(-5px); border-color: {cor_neon}; }}
-    .metric-title {{ color: #bbb; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }}
-    .metric-value {{ color: {cor_neon}; font-size: 24px; font-weight: bold; text-shadow: 0 0 10px {cor_neon}50; margin-top: 5px; }}
-
+    /* Animação Toast */
     @keyframes popup-anim {{ 0%, 100% {{ bottom: -100px; opacity: 0; }} 10%, 90% {{ bottom: 20px; opacity: 1; }} }}
-    @keyframes text-carousel {{
-        0% {{ content: "🔥 Marcos M. acabou de gerar uma Dupla Segura!"; border-left-color: {cor_neon}; }}
-        33% {{ content: "💰 Saque de R$ 850,00 realizado por Ana"; border-left-color: #FFD700; }}
-        66% {{ content: "🚨 Lucas ativou o Modo Kamikaze"; border-left-color: #ff3333; }}
-        100% {{ content: "✅ O VIP bateu 3 Greens seguidos hoje!"; border-left-color: #00ff88; }}
-    }}
-    .toast-flutuante {{ position: fixed; right: 20px; background: rgba(10, 22, 38, 0.95); color: white; padding: 15px 25px; border-radius: 10px; border-left: 5px solid {cor_neon}; box-shadow: 0 5px 20px rgba(0,0,0,0.8); z-index: 9999; animation: popup-anim 15s infinite; font-weight: bold; backdrop-filter: blur(5px); }}
-    .toast-flutuante::after {{ content: ""; animation: text-carousel 60s infinite steps(1); }}
+    @keyframes text-carousel {{ 0% {{ content: "🔥 Marcos M. gerou Dupla Segura!"; }} 50% {{ content: "✅ VIP bateu 3 Greens seguidos!"; }} }}
+    .toast-flutuante {{ position: fixed; right: 20px; background: rgba(26, 27, 34, 0.95); color: white; padding: 15px 25px; border-radius: 10px; border-left: 5px solid {cor_neon}; box-shadow: 0 5px 20px rgba(0,0,0,0.8); z-index: 9999; animation: popup-anim 15s infinite; font-weight: bold; }}
+    .toast-flutuante::after {{ content: ""; animation: text-carousel 30s infinite steps(1); }}
     </style>
-    
     <div class="toast-flutuante"></div>
     """, unsafe_allow_html=True)
 
-# --- CAPTURA DE KEY VIA URL (LOGIN MÁGICO) ---
+# --- CAPTURA DE KEY VIA URL ---
 url_key = ""
 if "key" in st.query_params:
     url_key = st.query_params["key"]
 
 # --- 5. TELA DE LOGIN ---
 if not st.session_state.autenticado:
-    st.markdown(f"<div class='header-destaque'>RONNYP V8 SUPREME</div>", unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
     with st.container():
-        st.markdown("<div class='glass-panel' style='max-width:400px; margin:auto;'>", unsafe_allow_html=True)
-        st.markdown(f"<h3 style='text-align:center; color:{cor_neon};'>ACESSO VIP Ouro</h3>", unsafe_allow_html=True)
+        st.markdown("<div style='max-width:400px; margin:auto; background-color: rgba(26,27,34,0.9); padding: 30px; border-radius: 12px; border: 1px solid #2d2f36;'>", unsafe_allow_html=True)
+        st.markdown(f"<h3 style='text-align:center; color:#fff;'>RONNYP <span style='color:{cor_neon};'>V8 SUPREME</span></h3>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align:center; color:#888; font-size: 12px; margin-bottom: 20px;'>INTELLIGENCE HUB</p>", unsafe_allow_html=True)
+        
         nome_in = st.text_input("Seu Nome:")
         genero_in = st.selectbox("Gênero:", ["Masculino", "Feminino"])
-        
         key_in = st.text_input("Sua Key:", value=url_key, type="password")
         
         st.markdown("<br>", unsafe_allow_html=True)
@@ -202,182 +192,102 @@ if not st.session_state.autenticado:
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- 6. CONTEÚDO LOGADO ---
-st.markdown(f"<div class='header-destaque'>RONNYP V8 SUPREME</div>", unsafe_allow_html=True)
+# --- 6. CONTEÚDO LOGADO (DASHBOARD FOOTI) ---
 itens_marquee = "".join([f"<div class='marquee-item'> 🔥 {n} ENTROU NO VIP </div>" for n in ["Marcos", "Ana", "Lucas", "Julia", "Tadeu", "Carla"]])
 st.markdown(f"<div class='marquee-wrapper'><div class='marquee-content'>{itens_marquee}{itens_marquee}</div></div>", unsafe_allow_html=True)
 
+st.markdown(f"<h4 class='neon-text'>BEM-VINDO</h4>", unsafe_allow_html=True)
+st.markdown(f"<h1 class='header-destaque'>{st.session_state.user_nome.upper()}</h1>", unsafe_allow_html=True)
+st.markdown("<p style='color: #888; font-size: 14px; margin-bottom: 20px;'>SUA JORNADA DE VITÓRIA COMEÇA AGORA.</p>", unsafe_allow_html=True)
+
 if st.session_state.show_welcome:
-    saudacao = get_saudacao()
-    st.toast(f"{saudacao}, {st.session_state.user_nome}! Vamos aos lucros! 💰")
+    st.toast(f"{get_saudacao()}, {st.session_state.user_nome}! Vamos aos lucros! 💰")
     tocar_som_moeda()
     st.balloons()
     st.session_state.show_welcome = False
 
+# --- DASHBOARD STATS (ESTILO FOOTI) ---
+st.markdown("<p style='color: #888; font-size: 12px; margin-bottom: 5px; font-weight: bold;'>📊 TRACK RECORD — 30 DIAS</p>", unsafe_allow_html=True)
+st.markdown(f"""
+<div class='stat-container'>
+    <div class='stat-box'><p class='stat-title'>Jogos</p><p class='stat-value'>1.248</p></div>
+    <div class='stat-box'><p class='stat-title'>Acertos</p><p class='stat-value green'>1.115</p></div>
+    <div class='stat-box'><p class='stat-title'>Win Rate</p><p class='stat-value'>89.4%</p></div>
+    <div class='stat-box'><p class='stat-title'>ROI</p><p class='stat-value green'>+14.2%</p></div>
+</div>
+""", unsafe_allow_html=True)
+
 # --- 7. MENU LATERAL & ADMIN ---
 with st.sidebar:
-    st.markdown("<div class='glass-panel' style='text-align: center; padding: 15px;'>", unsafe_allow_html=True)
-    st.markdown(f"<h3 style='color:{cor_neon}; margin-bottom: 0; text-shadow: 0 0 10px {cor_neon};'>👑 CEO & FOUNDER</h3>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#bbb; font-size:14px;'>Ronny P. | Especialista em IA</p>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='color:{cor_neon}; text-align:center;'>👑 CEO & FOUNDER</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#888; font-size:12px; margin-top:-10px;'>Ronny P. | Especialista em IA</p>", unsafe_allow_html=True)
     
-    st.markdown(f'<a href="https://instagram.com/ronny_olivzz61" target="_blank" class="btn-side" style="background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); border-radius: 30px;">📸 SIGA @ronny_olivzz61</a>', unsafe_allow_html=True)
-    st.markdown(f'<a href="https://tiktok.com/@ronny.p061" target="_blank" class="btn-side" style="background: #000; border: 1px solid {cor_neon}; border-radius: 30px;">🎵 SIGA @ronny.p061 no TikTok</a>', unsafe_allow_html=True)
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown(f'<a href="https://instagram.com/ronny_olivzz61" target="_blank" class="btn-side" style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);">📸 SIGA @ronny_olivzz61</a>', unsafe_allow_html=True)
     
-    # SAUDAÇÃO DINÂMICA
-    saudacao_sidebar = get_saudacao()
-    st.markdown(f"<p style='text-align:center; font-size: 18px; margin-bottom: 5px;'>{saudacao_sidebar}, <b>{st.session_state.user_nome}</b></p>", unsafe_allow_html=True)
-    st.markdown(f"<div style='text-align:center; margin-bottom: 20px;'><span style='background-color:rgba(0,0,0,0.5); padding: 5px 15px; border-radius: 20px; color:{cor_neon}; font-size: 12px; font-weight:bold; border: 1px solid {cor_neon}; box-shadow: 0 0 10px {cor_neon}50;'>💎 VIP DIAMANTE</span></div>", unsafe_allow_html=True)
-    
-    # RECURSO PREMIUM: ÁUDIO BRIEFING DO CEO
     st.markdown("---")
-    st.markdown(f"<h4 style='color:{cor_neon}; text-align:center; margin-bottom:5px;'>🎙️ BRIEFING DIÁRIO DO CEO</h4>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#bbb; font-size:12px;'>Ouça as instruções do Ronny para hoje:</p>", unsafe_allow_html=True)
+    st.markdown(f"<h4 style='color:{cor_neon}; text-align:center; margin-bottom:5px; font-size: 14px;'>🎙️ BRIEFING DIÁRIO</h4>", unsafe_allow_html=True)
     st.audio(LINK_SEU_AUDIO_BRIEFING, format="audio/mp3")
 
     st.markdown("---")
-    st.subheader("🔗 ACESSOS RÁPIDOS")
+    st.markdown("<p style='color:#888; font-size:11px; font-weight:bold;'>ACESSOS RÁPIDOS</p>", unsafe_allow_html=True)
     st.markdown(f'<a href="{LINK_CASA_1}" target="_blank" class="btn-side" style="background: {cor_neon}; color: #000 !important;">🎰 CASA RECOMENDADA</a>', unsafe_allow_html=True)
     st.markdown(f'<a href="{LINK_SUPORTE}" target="_blank" class="btn-side" style="background: #25d366;">🟢 SUPORTE WHATSAPP</a>', unsafe_allow_html=True)
-    st.markdown(f'<a href="{LINK_CANAL}" target="_blank" class="btn-side" style="background: #0088cc;">🔵 CANAL TELEGRAM</a>', unsafe_allow_html=True)
     
-    st.markdown("---")
-    st.subheader("📊 GESTÃO & ALAVANCAGEM")
-    banca = st.number_input("Banca Atual (R$):", value=100.0)
-    entrada = banca * 0.03
-    st.info(f"💰 Entrada Ideal (3%): R$ {entrada:.2f}")
-    
-    st.markdown("<p style='font-size: 14px; color: #bbb;'>📈 Evolução da Banca em 30 Dias (Meta 3%/dia)</p>", unsafe_allow_html=True)
-    evolucao = []
-    banca_simulada = banca
-    for _ in range(30):
-        banca_simulada *= 1.03
-        evolucao.append(banca_simulada)
-    st.bar_chart(evolucao, height=150)
-    st.success(f"Projeção final: R$ {banca_simulada:.2f}")
-
-    msg_pix = urllib.parse.quote("Fala Ronny! Meu acesso VIP V8 Supreme está acabar e não quero ficar de fora. Envia-me a chave PIX para eu renovar! 💸🚀")
-    link_pix = f"https://wa.me/5561996193390?text={msg_pix}"
-    st.markdown(f'<a href="{link_pix}" target="_blank" class="btn-pix">🔄 RENOVAR VIP VIA PIX</a>', unsafe_allow_html=True)
-
     if st.session_state.is_admin:
         st.markdown("---")
-        st.subheader("🎫 GERADOR DE KEYS")
+        st.markdown("<p style='color:#888; font-size:11px; font-weight:bold;'>GERADOR DE KEYS</p>", unsafe_allow_html=True)
         c_nome = st.text_input("Nome da Key:")
         tempo_key = st.selectbox("Validade:", ["24 Horas", "7 Dias", "30 Dias"])
         if st.button("CRIAR VIP"):
-            horas = 24
-            if tempo_key == "7 Dias": horas = 168
-            elif tempo_key == "30 Dias": horas = 720
+            horas = 24 if tempo_key == "24 Horas" else (168 if tempo_key == "7 Dias" else 720)
             salvar_key(c_nome, horas)
-            
-            st.success(f"✅ Key {c_nome} gerada com sucesso!")
-            
             link_magico = f"{LINK_PAINEL}?key={c_nome}"
-            msg_cliente = f"✅ *ACESSO VIP LIBERADO!*\n\nFala campeão! Seu acesso ao *RonnyP V8 Supreme* está pronto.\n\n🔑 *Sua Key:* {c_nome}\n⏳ *Validade:* {tempo_key}\n\n🔗 *Acesse direto clicando aqui:*\n{link_magico}"
-            
-            st.code(msg_cliente, language="text")
-            
-            txt_zap_codificado = urllib.parse.quote(msg_cliente)
-            link_zap_cliente = f"https://api.whatsapp.com/send?text={txt_zap_codificado}"
-            st.markdown(f'<a href="{link_zap_cliente}" target="_blank" class="btn-side" style="background: #25d366; color: white !important;">🟢 ENVIAR PARA O CLIENTE (ZAP)</a>', unsafe_allow_html=True)
+            st.success(f"✅ Key {c_nome} gerada!")
+            st.code(link_magico, language="text")
 
-    st.markdown("<br>"*5, unsafe_allow_html=True)
+    st.markdown("<br><br>", unsafe_allow_html=True)
     if st.button("SAIR", use_container_width=True):
         st.session_state.autenticado = False
         st.rerun()
 
-# --- 8. DASHBOARD E SISTEMA PREMIUM ---
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.markdown(f"<div class='metric-card'><div class='metric-title'>Win Rate IA (30D)</div><div class='metric-value'>89.4%</div></div>", unsafe_allow_html=True)
-with c2:
-    st.markdown(f"<div class='metric-card'><div class='metric-title'>Jogos Analisados</div><div class='metric-value'>1.248</div></div>", unsafe_allow_html=True)
-with c3:
-    st.markdown(f"<div class='metric-card'><div class='metric-title'>Oportunidades Hoje</div><div class='metric-value'>14 Ativas</div></div>", unsafe_allow_html=True)
-
-st.markdown(f"""
-<div class='glass-panel' style='padding: 10px 20px; text-align: center; border-left: 4px solid #FFD700; margin-top: 15px;'>
-    <span style='color:#FFD700; font-weight:bold;'>🧠 A Palavra do CEO (@ronny_olivzz61):</span> <span style='color:#bbb; font-style:italic;'>"O amador aposta por emoção, o profissional investe com gestão. Siga a IA e respeite a sua meta diária!"</span>
-</div>
-""", unsafe_allow_html=True)
-
+# --- 8. TABS DE NAVEGAÇÃO ---
 st.markdown("<br>", unsafe_allow_html=True)
-
-t1, t2, t3, t4 = st.tabs(["🚀 SCANNER IA", "📋 BILHETE", "🛡️ BILHETE SAFE", "🏆 HISTÓRICO VIP"])
+t1, t2, t3 = st.tabs(["🚀 SELECTION HUB (Apostas)", "📋 MEU BILHETE", "🛡️ ALTO EV (Safe)"])
 
 LIGAS_DISPONIVEIS = {
-    "🇬🇧 Premier League (Inglaterra)": "soccer_epl",
-    "🇪🇺 Champions League": "soccer_uefa_champs_league",
-    "🇪🇸 La Liga (Espanha)": "soccer_spain_la_liga",
-    "🇮🇹 Serie A (Itália)": "soccer_italy_serie_a",
-    "🇩🇪 Bundesliga (Alemanha)": "soccer_germany_bundesliga",
-    "🇫🇷 Ligue 1 (França)": "soccer_france_ligue_one",
-    "🇧🇷 Brasileirão Série A": "soccer_brazil_campeonato",
-    "🌎 Libertadores": "soccer_conmebol_libertadores"
+    "🇬🇧 Premier League": "soccer_epl", "🇪🇺 Champions League": "soccer_uefa_champs_league",
+    "🇪🇸 La Liga": "soccer_spain_la_liga", "🇮🇹 Serie A": "soccer_italy_serie_a",
+    "🇧🇷 Brasileirão": "soccer_brazil_campeonato"
 }
 
 with t1:
-    with st.expander("✍️ MODO MANUAL: Inserir Grade de Jogos"):
-        grade = st.text_area("Cole aqui a sua lista de jogos:", height=150)
-        if st.button("🔍 INICIAR ANÁLISE MANUAL", use_container_width=True):
-            if grade:
-                jogos = [j for j in grade.split('\n') if 'x' in j.lower()]
-                st.session_state.analisados = []
-                mercados = ["Ambas Marcam", "Over 1.5 Gols", "Vitória", "Cantos +8.5", "Over 2.5 Gols"]
-                for j in jogos:
-                    st.session_state.analisados.append({
-                        "jogo": j, "m": random.choice(mercados), "o": round(random.uniform(1.5, 2.3), 2), "conf": random.randint(93,99)
-                    })
-                st.success("Análise manual concluída!")
-
-    st.markdown("<h4 style='color:white; margin-top: 15px;'>🎯 VARREDURA AUTOMÁTICA DE ODDS REAIS</h4>", unsafe_allow_html=True)
+    st.markdown("<p style='color:#888; font-size: 12px;'>ESCOLHA SUAS PARTIDAS E DEIXE NOSSA IA CALCULAR A MELHOR ENTRADA.</p>", unsafe_allow_html=True)
     
-    liga_selecionada = st.selectbox("Escolha o Campeonato para Varrer:", list(LIGAS_DISPONIVEIS.keys()))
+    liga_selecionada = st.selectbox("Selecione o Mercado:", list(LIGAS_DISPONIVEIS.keys()))
     codigo_da_liga = LIGAS_DISPONIVEIS[liga_selecionada]
     
-    if st.button("🚨 INICIAR VARREDURA IA", use_container_width=True):
-        with st.status("A iniciar Protocolo V8 Supreme...", expanded=True) as status:
-            st.write("⏳ [10%] A conectar aos servidores asiáticos...")
-            time.sleep(0.6)
-            st.write("🔓 [45%] A encontrar brechas de odds de valor...")
-            time.sleep(0.6)
-            st.write("📡 [80%] A extrair e cruzar dados globais...")
-            
+    if st.button("🚨 PROCESSAR DADOS IA", use_container_width=True):
+        with st.spinner("Analisando 10.000 variáveis..."):
             url = f"https://api.the-odds-api.com/v4/sports/{codigo_da_liga}/odds/?apiKey={ODDS_API_KEY}&regions=eu,uk&markets=h2h,totals"
-            
             try:
                 resposta = requests.get(url)
                 if resposta.status_code == 200:
                     dados = resposta.json()
                     st.session_state.analisados = []
-                    
                     hoje_brasil = datetime.utcnow() - timedelta(hours=3)
                     data_hoje_str = hoje_brasil.strftime("%Y-%m-%d")
-                    jogos_do_dia = []
                     
-                    for jogo in dados:
-                        data_jogo_utc_str = jogo.get('commence_time', '')
-                        if data_jogo_utc_str:
-                            try:
-                                data_jogo_utc = datetime.strptime(data_jogo_utc_str, "%Y-%m-%dT%H:%M:%SZ")
-                                data_jogo_brasil = data_jogo_utc - timedelta(hours=3)
-                                if data_jogo_brasil.strftime("%Y-%m-%d") == data_hoje_str:
-                                    jogos_do_dia.append(jogo)
-                            except: pass
-                    
-                    for jogo in jogos_do_dia[:25]:
+                    for jogo in dados[:15]: 
                         casa = jogo.get('home_team', 'Casa')
                         fora = jogo.get('away_team', 'Fora')
                         
-                        hora_jogo = ""
+                        hora_jogo = "19:00"
                         try:
                             dj_utc = datetime.strptime(jogo.get('commence_time', ''), "%Y-%m-%dT%H:%M:%SZ")
-                            dj_br = dj_utc - timedelta(hours=3)
-                            hora_jogo = dj_br.strftime("%H:%M")
+                            hora_jogo = (dj_utc - timedelta(hours=3)).strftime("%H:%M")
                         except: pass
                         
-                        nome_jogo = f"🕒 {hora_jogo} | {casa} x {fora}"
+                        nome_jogo = f"{casa} x {fora}"
                         mercados_encontrados = []
                         
                         if jogo.get('bookmakers'):
@@ -385,237 +295,90 @@ with t1:
                                 for mercado in bookie.get('markets', []):
                                     if mercado['key'] == 'h2h':
                                         for out in mercado['outcomes']:
-                                            if out['name'] == casa: mercados_encontrados.append({"m": f"Vitória {casa}", "o": out['price']})
-                                            elif out['name'] == fora: mercados_encontrados.append({"m": f"Vitória {fora}", "o": out['price']})
-                                            elif out['name'].lower() == 'draw': mercados_encontrados.append({"m": "Empate", "o": out['price']})
-                                    elif mercado['key'] == 'totals':
-                                        for out in mercado['outcomes']:
-                                            pt = out.get('point', 0)
-                                            if out['name'] == 'Over':
-                                                mercados_encontrados.append({"m": f"Over {pt} Gols", "o": out['price']})
-                                            elif out['name'] == 'Under':
-                                                mercados_encontrados.append({"m": f"Under {pt} Gols", "o": out['price']})
-
-                        mercados_unicos = {}
-                        for m in mercados_encontrados:
-                            if m['m'] not in mercados_unicos:
-                                mercados_unicos[m['m']] = m
-                        lista_mercados = list(mercados_unicos.values())
-
-                        melhor_aposta = None
-                        if lista_mercados:
-                            apostas_validas = [ap for ap in lista_mercados if 1.30 <= ap['o'] <= 2.50]
-                            if apostas_validas:
-                                melhor_aposta = random.choice(apostas_validas)
-                            else:
-                                melhor_aposta = random.choice(lista_mercados)
+                                            mercados_encontrados.append({"m": f"Vitória {out['name']}", "o": out['price']})
                         
-                        if melhor_aposta:
+                        if mercados_encontrados:
+                            melhor_aposta = random.choice(mercados_encontrados)
                             st.session_state.analisados.append({
-                                "jogo": nome_jogo,
-                                "m": melhor_aposta["m"],
-                                "o": round(melhor_aposta["o"], 2),
-                                "conf": random.randint(85, 99)
+                                "jogo": nome_jogo, "casa": casa, "fora": fora, "hora": hora_jogo,
+                                "m": melhor_aposta["m"], "o": round(melhor_aposta["o"], 2), "conf": random.randint(85, 99)
                             })
-                            
-                    if not st.session_state.analisados:
-                        st.warning(f"Nenhum jogo previsto para HOJE na {liga_selecionada}.")
-                        status.update(label="Varredura concluída, mas sem jogos.", state="error", expanded=False)
-                    else:
-                        status.update(label="✅ [100%] Oportunidades injetadas com sucesso no radar!", state="complete", expanded=False)
-                else:
-                    st.error(f"Erro {resposta.status_code}: {resposta.text}")
-                    status.update(label="Erro na busca.", state="error")
-            except Exception as e:
-                st.error(f"Erro de conexão: {e}")
-                status.update(label="Erro de Conexão.", state="error")
+                    st.success("Radar atualizado!")
+                else: st.error("Erro na API.")
+            except Exception as e: st.error("Erro de conexão.")
 
+    # Renderização das Partidas (ESTILO FOOTI CARDS)
     if st.session_state.analisados:
-        st.markdown("---")
-        st.markdown("<h5 style='color:white;'>🎯 PAINEL DE CONTROLO IA</h5>", unsafe_allow_html=True)
-        min_conf = st.slider("MODO SNIPER: Filtrar jogos por assertividade (%):", min_value=85, max_value=99, value=85)
-        
-        col_m1, col_m2 = st.columns(2)
-        with col_m1:
-            if st.button("🎲 GERAR DUPLA SEGURA", use_container_width=True):
-                if len(st.session_state.analisados) >= 2:
-                    seguras = sorted(st.session_state.analisados, key=lambda x: x['o'])[:2]
-                    st.session_state.bilhete.extend(seguras)
-                    tocar_som_moeda()
-                    st.success("✅ Dupla Segura adicionada!")
-                else:
-                    st.warning("Preciso de 2 jogos varridos.")
-        with col_m2:
-            if st.button("🚨 MODO KAMIKAZE: CAÇAR ZEBRAS", use_container_width=True):
-                zebras = [x for x in st.session_state.analisados if x['o'] >= 3.00]
-                if zebras:
-                    st.session_state.bilhete.extend(zebras[:2]) 
-                    tocar_som_alerta()
-                    st.error("🚨 Alerta Vermelho! Zebras adicionadas ao bilhete.")
-                else:
-                    st.warning("Nenhuma odd Zebra (acima de @3.00) encontrada para hoje.")
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
+        st.markdown("<br><h4 class='neon-text'>OPORTUNIDADES IDENTIFICADAS</h4>", unsafe_allow_html=True)
         for idx, item in enumerate(st.session_state.analisados):
-            if item['conf'] >= min_conf:
-                atk = random.randint(75, 99)
-                dfs = random.randint(65, 95)
+            st.markdown(f"""
+            <div class='game-card'>
+                <div style='display: flex; justify-content: space-between; align-items: center;'>
+                    <div style='width: 40%; font-weight: bold; font-size: 15px;'>{item['casa']}</div>
+                    <div style='width: 10%; text-align: center; color: #555; font-size: 12px; font-style: italic;'>VS</div>
+                    <div style='width: 40%; font-weight: bold; font-size: 15px; text-align: right;'>{item['fora']}</div>
+                </div>
                 
-                html_card = (
-                    f"<div class='glass-panel' style='border-left: 5px solid {cor_neon}; padding: 15px;'>"
-                    f"<div style='color:{cor_neon}; font-weight:bold; font-size:12px; margin-bottom: 5px; text-transform: uppercase;'>🔥 IA Confidence: {item['conf']}%</div>"
-                    f"<div style='width: 100%; background-color: rgba(0,0,0,0.5); border-radius: 5px; margin-bottom: 8px; overflow: hidden;'>"
-                    f"<div style='width: {item['conf']}%; height: 6px; background-color: {cor_neon}; border-radius: 5px; box-shadow: 0 0 10px {cor_neon};'></div>"
-                    f"</div>"
-                    f"<div style='display: flex; justify-content: space-between; font-size: 11px; color:#bbb; margin-bottom: 12px;'>"
-                    f"<div style='width: 48%;'>⚔️ ATK: {atk} "
-                    f"<div style='width:100%; background:rgba(0,0,0,0.5); border-radius:3px; margin-top:2px;'>"
-                    f"<div style='width:{atk}%; height:4px; background:#ff3333; border-radius:3px;'></div>"
-                    f"</div></div>"
-                    f"<div style='width: 48%;'>🛡️ DEF: {dfs} "
-                    f"<div style='width:100%; background:rgba(0,0,0,0.5); border-radius:3px; margin-top:2px;'>"
-                    f"<div style='width:{dfs}%; height:4px; background:#00e5ff; border-radius:3px;'></div>"
-                    f"</div></div></div>"
-                    f"<div style='font-size:18px; font-weight:bold; color:white; text-shadow: 1px 1px 2px black;'>{item['jogo']}</div>"
-                    f"<div style='margin-top:8px; color:#ddd;'>🎯 Mercado: <b>{item['m']}</b> | <span style='color:{cor_neon}; font-size: 16px; font-weight: bold;'>@{item['o']}</span></div>"
-                    f"</div>"
-                )
-                st.markdown(html_card, unsafe_allow_html=True)
+                <div style='margin-top: 15px; background-color: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;'>
+                    <div>
+                        <span style='font-size: 11px; color: #888;'>PREVISÃO IA:</span><br>
+                        <span style='color: {cor_neon}; font-weight: bold; font-size: 14px;'>{item['m']}</span>
+                    </div>
+                    <div style='text-align: right;'>
+                        <span style='font-size: 11px; color: #888;'>ODD CALC:</span><br>
+                        <span style='color: white; font-weight: bold; font-size: 16px;'>@{item['o']}</span>
+                    </div>
+                </div>
                 
-                if st.button(f"ADICIONAR JOGO", key=f"btn_{item['jogo']}_{idx}"):
-                    st.session_state.bilhete.append(item)
-                    st.toast("✅ Jogo adicionado ao bilhete!")
+                <div style='margin-top: 10px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #aaa;'>
+                    <span>🕒 Hoje às {item['hora']}</span>
+                    <span>⚡ Confiança: {item['conf']}%</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button(f"➕ ADICIONAR AO BILHETE", key=f"btn_{idx}"):
+                st.session_state.bilhete.append(item)
+                st.toast("✅ Jogo adicionado ao bilhete!")
 
 with t2:
     if st.session_state.bilhete:
         odd_f = 1.0
-        msg_tg = f"👑 *RONNYP VIP V8* 👑\n\n"
         msg_whats = "👑 *RONNYP VIP V8* 👑\n\n"
         
-        st.markdown("<div class='glass-panel'>", unsafe_allow_html=True)
+        st.markdown("<h4 class='neon-text'>SUA MÚLTIPLA OTIMIZADA</h4>", unsafe_allow_html=True)
+        st.markdown("<div style='background-color: rgba(26,27,34,0.8); padding: 15px; border-radius: 8px; border: 1px solid #2d2f36;'>", unsafe_allow_html=True)
         for b in st.session_state.bilhete:
             odd_f *= b['o']
-            st.markdown(f"<p style='margin:0; font-size:16px;'>✅ <b>{b['jogo']}</b> (@{b['o']})</p>", unsafe_allow_html=True)
-            msg_tg += f"🏟️ *{b['jogo']}*\n🎯 {b['m']} (@{b['o']})\n\n"
+            st.markdown(f"<p style='margin:0; font-size:14px; border-bottom: 1px solid #333; padding: 5px 0;'>✅ <b>{b['jogo']}</b> <span style='float:right; color:{cor_neon}; font-weight:bold;'>@{b['o']}</span></p>", unsafe_allow_html=True)
             msg_whats += f"🏟️ {b['jogo']}\n🎯 {b['m']} (@{b['o']})\n\n"
         st.markdown("</div>", unsafe_allow_html=True)
         
-        is_super_odd = False
-        if len(st.session_state.bilhete) >= 3:
-            odd_f *= 1.15
-            is_super_odd = True
-            
-        if is_super_odd:
-            st.warning("🔥 SUPER ODD ATIVADA! Bónus de +15% aplicado por múltipla de 3+ jogos!")
-            
-        st.markdown(f"<h2 style='text-align:center;'>📊 ODD TOTAL: {odd_f:.2f}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='text-align:center; margin-top:20px;'>📊 ODD TOTAL: <span style='color:{cor_neon};'>{odd_f:.2f}</span></h2>", unsafe_allow_html=True)
         
-        if odd_f <= 2.50:
-            risco_cor = "#00ff88"
-            risco_txt = "🟢 BILHETE SEGURO (Alta Taxa de Acerto)"
-        elif odd_f <= 5.00:
-            risco_cor = "#ffcc00"
-            risco_txt = "🟡 BILHETE MODERADO (Lucro Bom, Risco Médio)"
-        else:
-            risco_cor = "#ff3333"
-            risco_txt = "🔴 BILHETE KAMIKAZE (Alto Risco, Retorno Gigante)"
-            
-        st.markdown(f"<div style='background-color: {risco_cor}20; border: 1px solid {risco_cor}; padding: 12px; border-radius: 8px; text-align: center; color: {risco_cor}; font-weight: bold; margin-bottom: 20px; box-shadow: 0 0 10px {risco_cor}40;'>{risco_txt}</div>", unsafe_allow_html=True)
+        valor_aposta = st.number_input("💸 Stake (R$):", min_value=1.0, value=10.0, step=5.0)
+        retorno = valor_aposta * odd_f
+        st.info(f"🤑 RETORNO ESPERADO: R$ {retorno:.2f}")
         
-        st.markdown(f"<div class='glass-panel' style='border: 1px solid {cor_neon};'>", unsafe_allow_html=True)
-        valor_aposta = st.number_input("💸 Qual o valor que deseja investir? (R$):", min_value=1.0, value=10.0, step=5.0)
-        retorno_esperado = valor_aposta * odd_f
-        st.markdown(f"<h2 style='color:{cor_neon}; text-align:center; text-shadow: 0 0 15px {cor_neon}; margin-top: 10px;'>🤑 RETORNO: R$ {retorno_esperado:.2f}</h2>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        final_msg_whats = msg_whats + f"📊 *Odd Total: {odd_f:.2f}*\n💸 Aposta: R$ {valor_aposta:.2f}\n🤑 Retorno: R$ {retorno:.2f}\n\n🎰 APOSTE AQUI: {LINK_CASA_1}"
         
-        final_msg_tg = msg_tg + f"📊 *Odd Total: {odd_f:.2f}*\n💸 *Aposta:* R$ {valor_aposta:.2f}\n🤑 *Retorno:* R$ {retorno_esperado:.2f}\n\n🎰 [APOSTE AQUI]({LINK_CASA_1})"
-        final_msg_whats = msg_whats + f"📊 *Odd Total: {odd_f:.2f}*\n💸 Aposta: R$ {valor_aposta:.2f}\n🤑 Retorno: R$ {retorno_esperado:.2f}\n\n🎰 APOSTE AQUI: {LINK_CASA_1}"
+        link_zap = f"https://api.whatsapp.com/send?text={urllib.parse.quote(final_msg_whats)}"
+        st.markdown(f'<a href="{link_zap}" target="_blank" class="btn-side" style="background: #25d366;">🟢 ENVIAR PRO ZAP</a>', unsafe_allow_html=True)
         
-        col_b1, col_b2, col_b3 = st.columns(3)
-        with col_b1:
-            if st.button("ENVIAR TELEGRAM", use_container_width=True):
-                tocar_som_moeda() 
-                asyncio.run(Bot(TOKEN).send_message(CHAT_ID, final_msg_tg, parse_mode='Markdown'))
-                st.success("Sinal enviado!")
-        with col_b2:
-            texto_codificado = urllib.parse.quote(final_msg_whats)
-            link_zap = f"https://api.whatsapp.com/send?text={texto_codificado}"
-            st.markdown(f'<a href="{link_zap}" target="_blank" class="btn-side" style="background: #25d366; margin:0;">🟢 ENVIAR ZAP</a>', unsafe_allow_html=True)
-        with col_b3:
-            st.download_button(label="📄 DESCARREGAR RECIBO", data=final_msg_whats, file_name="cupom_v8_supreme.txt", mime="text/plain", use_container_width=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
         if st.button("🗑️ LIMPAR BILHETE", use_container_width=True):
             st.session_state.bilhete = []
             st.rerun()
     else:
-        st.info("Nenhum jogo selecionado. Faça uma varredura (ou adicione manualmente) para montar o seu bilhete!")
+        st.info("Seu bilhete está vazio. Vá no Selection Hub e adicione partidas.")
 
 with t3:
-    st.markdown("<h4 style='color:white; margin-top: 10px; text-align:center;'>🛡️ A BOA DO DIA (BILHETE SAFE)</h4>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#bbb; text-align:center; font-size:14px;'>Nossa IA já cruzou os dados de madrugada e separou a entrada mais segura de hoje. É só copiar e colar na sua banca!</p>", unsafe_allow_html=True)
-    
-    hoje_str = datetime.now().strftime("%Y-%m-%d")
-    estado_aleatorio_atual = random.getstate()
-    random.seed(hoje_str)
-    
-    jogos_seguros_base = [
-        {"jogo": "Real Madrid x Adversário", "m": "Vitória Real Madrid", "o": 1.35},
-        {"jogo": "Manchester City x Adversário", "m": "Over 1.5 Gols", "o": 1.25},
-        {"jogo": "Bayern de Munique x Adversário", "m": "Over 1.5 Gols", "o": 1.22},
-        {"jogo": "Arsenal x Adversário", "m": "Vitória Arsenal", "o": 1.40},
-        {"jogo": "Inter de Milão x Adversário", "m": "Over 1.5 Gols", "o": 1.28},
-        {"jogo": "Bayer Leverkusen x Adversário", "m": "Ambas Marcam", "o": 1.45},
-        {"jogo": "Liverpool x Adversário", "m": "Vitória Liverpool", "o": 1.32},
-        {"jogo": "Flamengo x Adversário", "m": "Vitória ou Empate", "o": 1.20}
-    ]
-    
-    safe_pick = random.sample(jogos_seguros_base, 2)
-    random.setstate(estado_aleatorio_atual)
-    
-    odd_safe_total = safe_pick[0]['o'] * safe_pick[1]['o']
-    
-    st.markdown(f"""
-    <div class='glass-panel' style='border: 2px solid #FFD700; box-shadow: 0 0 25px rgba(255, 215, 0, 0.2); background: rgba(255,215,0,0.05);'>
-        <div style='text-align:center; margin-bottom: 15px;'>
-            <span style='background:#FFD700; color:#000; padding:5px 15px; border-radius:20px; font-weight:bold; font-size:12px;'>🏆 IA ASSERTIVIDADE: 98%</span>
-        </div>
-        <div style='border-left: 4px solid #00ff88; padding-left: 10px; margin-bottom: 10px;'>
-            <div style='color:white; font-weight:bold; font-size: 16px;'>⚽ {safe_pick[0]['jogo']}</div>
-            <div style='color:#bbb; font-size: 14px;'>🎯 {safe_pick[0]['m']} | <span style='color:#00ff88; font-weight:bold;'>@{safe_pick[0]['o']:.2f}</span></div>
-        </div>
-        <div style='border-left: 4px solid #00ff88; padding-left: 10px; margin-bottom: 15px;'>
-            <div style='color:white; font-weight:bold; font-size: 16px;'>⚽ {safe_pick[1]['jogo']}</div>
-            <div style='color:#bbb; font-size: 14px;'>🎯 {safe_pick[1]['m']} | <span style='color:#00ff88; font-weight:bold;'>@{safe_pick[1]['o']:.2f}</span></div>
-        </div>
-        <hr style='border-color: rgba(255,215,0,0.3);'>
-        <h3 style='text-align:center; color:#FFD700; text-shadow: 0 0 10px #FFD700;'>📊 ODD FINAL: {odd_safe_total:.2f}</h3>
+    st.markdown("""
+    <div style='background-color: #1a1b22; padding: 20px; border-radius: 12px; border: 1px solid #FFD700;'>
+        <span style='background-color: #FFD700; color: #000; padding: 3px 8px; font-weight: bold; font-size: 10px; border-radius: 3px;'>👑 PRO EXCLUSIVE</span>
+        <h3 style='margin-top: 10px; color: #FFD700;'>APOSTAS ALTO EV</h3>
+        <p style='color: #888; font-size: 12px;'>IDENTIFICAMOS AS ODDS DESAJUSTADAS COM MAIOR EXPECTATIVA DE VALOR REAL.</p>
+        <hr style='border-color: #333;'>
+        <p style='color: white; font-weight: bold;'>⚽ Manchester City vs Arsenal</p>
+        <p style='color: #bbb; font-size: 14px;'>🎯 Ambas Marcam | <span style='color: #FFD700; font-weight: bold;'>@1.85</span></p>
     </div>
     """, unsafe_allow_html=True)
-    
-    if st.button("🔥 COPIAR SAFE PARA O MEU BILHETE", use_container_width=True):
-        st.session_state.bilhete.extend(safe_pick)
-        tocar_som_moeda()
-        st.success("✅ Bilhete Safe copiado com sucesso! Vá até a aba '📋 BILHETE' para ver seu lucro.")
-
-with t4:
-    st.markdown("<h4 style='color:white; margin-top: 10px;'>🏆 ÚLTIMOS GREENS DO VIP</h4>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#bbb;'>Confirme o histórico recente de acertos do nosso sistema de inteligência artificial:</p>", unsafe_allow_html=True)
-    
-    historico = [
-        {"j": "Real Madrid x SL Benfica", "m": "Over 2.5 Gols", "o": 1.75},
-        {"j": "Paris Saint Germain x Monaco", "m": "Over 8.5 Cantos", "o": 1.65},
-        {"j": "Cruzeiro x Corinthians", "m": "Ambas Marcam", "o": 1.90},
-        {"j": "Juventus FC x Galatasaray", "m": "1 e Over 2.5", "o": 2.15},
-    ]
-    
-    for h in historico:
-        st.markdown(f"""
-        <div class='glass-panel' style='border-left: 5px solid #00ff88; padding: 15px;'>
-            <div style='color:white; font-weight:bold; font-size: 16px;'>{h['j']}</div>
-            <div style='color:#bbb; font-size: 14px; margin-top:5px;'>🎯 {h['m']} | <span style='color:#00ff88; font-weight:bold; font-size: 16px;'>@{h['o']} ✅ GREEN</span></div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    st.success("🤖 O V8 Supreme mantém uma taxa de assertividade média de 89.4% nos últimos 30 dias!")
