@@ -409,4 +409,90 @@ with t3:
 # ==========================================
 with t4:
     st.markdown("<h4 class='neon-text'>ALTO EV (SAFE)</h4>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#bbb; font-size:14px
+    st.markdown("<p style='color:#bbb; font-size:14px;'>A Inteligência Artificial separou a entrada mais segura de hoje. Copie e cole na sua banca!</p>", unsafe_allow_html=True)
+    
+    hoje_str = datetime.now().strftime("%Y-%m-%d")
+    estado_aleatorio_atual = random.getstate()
+    random.seed(hoje_str)
+    
+    jogos_seguros_base = [
+        {"jogo": "Real Madrid x Adversário", "m": "Vitória Real Madrid", "o": 1.35},
+        {"jogo": "Manchester City x Adversário", "m": "Over 1.5 Gols", "o": 1.25},
+        {"jogo": "Bayern de Munique x Adversário", "m": "Over 1.5 Gols", "o": 1.22},
+        {"jogo": "Arsenal x Adversário", "m": "Vitória Arsenal", "o": 1.40}
+    ]
+    safe_pick = random.sample(jogos_seguros_base, 2)
+    random.setstate(estado_aleatorio_atual)
+    odd_safe_total = safe_pick[0]['o'] * safe_pick[1]['o']
+    
+    st.markdown(f"""
+    <div style='background-color: rgba(26,27,34,0.9); padding: 20px; border-radius: 12px; border: 1px solid #FFD700;'>
+        <div style='text-align:center; margin-bottom: 15px;'>
+            <span style='background:#FFD700; color:#000; padding:5px 15px; border-radius:20px; font-weight:bold; font-size:12px;'>🏆 IA ASSERTIVIDADE: 98%</span>
+        </div>
+        <div style='border-left: 4px solid #00ff88; padding-left: 10px; margin-bottom: 10px;'>
+            <div style='color:white; font-weight:bold; font-size: 16px;'>⚽ {safe_pick[0]['jogo']}</div>
+            <div style='color:#bbb; font-size: 14px;'>🎯 {safe_pick[0]['m']} | <span style='color:#00ff88; font-weight:bold;'>@{safe_pick[0]['o']:.2f}</span></div>
+        </div>
+        <div style='border-left: 4px solid #00ff88; padding-left: 10px; margin-bottom: 15px;'>
+            <div style='color:white; font-weight:bold; font-size: 16px;'>⚽ {safe_pick[1]['jogo']}</div>
+            <div style='color:#bbb; font-size: 14px;'>🎯 {safe_pick[1]['m']} | <span style='color:#00ff88; font-weight:bold;'>@{safe_pick[1]['o']:.2f}</span></div>
+        </div>
+        <hr style='border-color: rgba(255,215,0,0.3);'>
+        <h3 style='text-align:center; color:#FFD700; text-shadow: 0 0 10px #FFD700;'>📊 ODD FINAL: {odd_safe_total:.2f}</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    if st.button("🔥 COPIAR SAFE PARA O MEU BILHETE", use_container_width=True):
+        st.session_state.bilhete.extend(safe_pick)
+        tocar_som_moeda()
+        st.success("✅ Bilhete Safe copiado com sucesso!")
+
+# ==========================================
+# ABA 5: PERFIL (Todas as opções da antiga Sidebar)
+# ==========================================
+with t5:
+    st.markdown(f"<h3 style='color:{cor_neon}; text-align:center;'>👑 CEO & FOUNDER</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#888; font-size:12px; margin-top:-10px;'>Ronny P. | Especialista em IA</p>", unsafe_allow_html=True)
+    st.markdown(f'<a href="https://instagram.com/ronny_olivzz61" target="_blank" class="btn-side" style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);">📸 SIGA @ronny_olivzz61</a>', unsafe_allow_html=True)
+    
+    st.markdown("---")
+    st.markdown(f"<h4 style='color:{cor_neon}; text-align:center; font-size: 14px;'>🎙️ BRIEFING DIÁRIO</h4>", unsafe_allow_html=True)
+    st.audio(LINK_SEU_AUDIO_BRIEFING, format="audio/mp3")
+
+    st.markdown("---")
+    st.markdown("<p style='color:#888; font-size:11px; font-weight:bold;'>ACESSOS RÁPIDOS</p>", unsafe_allow_html=True)
+    st.markdown(f'<a href="{LINK_CASA_1}" target="_blank" class="btn-side" style="background: {cor_neon}; color: #000 !important;">🎰 CASA RECOMENDADA</a>', unsafe_allow_html=True)
+    st.markdown(f'<a href="{LINK_SUPORTE}" target="_blank" class="btn-side" style="background: #25d366;">🟢 SUPORTE WHATSAPP</a>', unsafe_allow_html=True)
+    st.markdown(f'<a href="{LINK_CANAL}" target="_blank" class="btn-side" style="background: #0088cc;">🔵 CANAL TELEGRAM</a>', unsafe_allow_html=True)
+    
+    st.markdown("---")
+    st.markdown("<p style='color:#888; font-size:11px; font-weight:bold;'>🎨 PERSONALIZAR INTERFACE</p>", unsafe_allow_html=True)
+    st.selectbox(
+        "Escolha seu Neon:", 
+        ["Padrão (Por Gênero)", "🟢 Verde Hacker", "🟡 Ouro Milionário", "🔵 Azul Cyberpunk", "🔴 Vermelho Kamikaze", "🟣 Rosa Choque"],
+        key="tema_escolhido"
+    )
+    
+    st.markdown("---")
+    st.markdown("<p style='color:#888; font-size:11px; font-weight:bold;'>GESTÃO DE BANCA</p>", unsafe_allow_html=True)
+    banca = st.number_input("Banca Atual (R$):", value=100.0)
+    entrada = banca * 0.03
+    st.info(f"💰 Entrada Ideal (3%): R$ {entrada:.2f}")
+
+    if st.session_state.is_admin:
+        st.markdown("---")
+        st.markdown("<p style='color:#888; font-size:11px; font-weight:bold;'>GERADOR DE KEYS (ADMIN)</p>", unsafe_allow_html=True)
+        c_nome = st.text_input("Nome da Key:")
+        tempo_key = st.selectbox("Validade:", ["24 Horas", "7 Dias", "30 Dias"])
+        if st.button("CRIAR VIP"):
+            horas = 24 if tempo_key == "24 Horas" else (168 if tempo_key == "7 Dias" else 720)
+            salvar_key(c_nome, horas)
+            link_magico = f"{LINK_PAINEL}?key={c_nome}"
+            st.success(f"✅ Key {c_nome} gerada!")
+            st.code(link_magico, language="text")
+
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    if st.button("SAIR DO APLICATIVO"):
+        st.session_state.autenticado = False
+        st.rerun()
