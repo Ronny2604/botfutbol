@@ -203,26 +203,24 @@ with t1:
 
     st.markdown("<p style='color: #888; font-size: 12px; margin-bottom: 5px; font-weight: bold;'>📊 TRACK RECORD — 30 DIAS (AO VIVO)</p>", unsafe_allow_html=True)
     
-    # DASHBOARD DINÂMICO
     st.markdown(f"""
-    <div class='stat-container'>
-        <div class='stat-box'><p class='stat-title'>Jogos</p><p class='stat-value'>{st.session_state.total_jogos}</p></div>
-        <div class='stat-box'><p class='stat-title'>Acertos</p><p class='stat-value green'>{st.session_state.total_acertos}</p></div>
-        <div class='stat-box'><p class='stat-title'>Win Rate</p><p class='stat-value'>{win_rate:.1f}%</p></div>
-        <div class='stat-box'><p class='stat-title'>ROI</p><p class='stat-value green'>+{st.session_state.roi_atual:.1f}%</p></div>
-    </div>
-    """, unsafe_allow_html=True)
+<div class='stat-container'>
+    <div class='stat-box'><p class='stat-title'>Jogos</p><p class='stat-value'>{st.session_state.total_jogos}</p></div>
+    <div class='stat-box'><p class='stat-title'>Acertos</p><p class='stat-value green'>{st.session_state.total_acertos}</p></div>
+    <div class='stat-box'><p class='stat-title'>Win Rate</p><p class='stat-value'>{win_rate:.1f}%</p></div>
+    <div class='stat-box'><p class='stat-title'>ROI</p><p class='stat-value green'>+{st.session_state.roi_atual:.1f}%</p></div>
+</div>
+""", unsafe_allow_html=True)
 
     st.markdown("<h4 style='color:white; margin-top: 20px;'>🏆 ÚLTIMOS GREENS DO VIP</h4>", unsafe_allow_html=True)
     
-    # HISTÓRICO DINÂMICO
     for h in st.session_state.historico_greens:
         st.markdown(f"""
-        <div style='background-color: rgba(26,27,34,0.9); border-left: 5px solid #00ff88; padding: 15px; margin-bottom: 10px; border-radius: 6px;'>
-            <div style='color:white; font-weight:bold; font-size: 16px;'>{h['j']}</div>
-            <div style='color:#bbb; font-size: 14px; margin-top:5px;'>🎯 {h['m']} | <span style='color:#00ff88; font-weight:bold; font-size: 16px;'>@{h['o']} ✅ GREEN</span></div>
-        </div>
-        """, unsafe_allow_html=True)
+<div style='background-color: rgba(26,27,34,0.9); border-left: 5px solid #00ff88; padding: 15px; margin-bottom: 10px; border-radius: 6px;'>
+    <div style='color:white; font-weight:bold; font-size: 16px;'>{h['j']}</div>
+    <div style='color:#bbb; font-size: 14px; margin-top:5px;'>🎯 {h['m']} | <span style='color:#00ff88; font-weight:bold; font-size: 16px;'>@{h['o']} ✅ GREEN</span></div>
+</div>
+""", unsafe_allow_html=True)
 
 # ==========================================
 # ABA 2: RADAR (IA e Manual)
@@ -324,48 +322,62 @@ with t2:
                     st.session_state.bilhete.extend(seguras)
                     tocar_som_moeda()
                     st.success("✅ Dupla adicionada!")
-                else: st.warning("Preciso de 2 jogos.")
+                else: st.warning("Preciso de pelo menos 2 jogos varridos.")
+        
+        # --- NOVO BOTÃO: PROJETO ODD 1000 ---
         with col_m2:
-            if st.button("🚨 MODO KAMIKAZE"):
-                zebras = [x for x in st.session_state.analisados if x['o'] >= 3.00]
-                if zebras:
-                    st.session_state.bilhete.extend(zebras[:2]) 
+            if st.button("🚀 PROJETO ODD 1.000"):
+                if len(st.session_state.analisados) >= 4:
+                    # Pega os jogos com maior confiança primeiro
+                    jogos_ordenados = sorted(st.session_state.analisados, key=lambda x: x['conf'], reverse=True)
+                    bilhete_milionario = []
+                    odd_acumulada = 1.0
+                    
+                    for jogo in jogos_ordenados:
+                        bilhete_milionario.append(jogo)
+                        odd_acumulada *= jogo['o']
+                        # Se já chegou perto ou passou de 1000, para de adicionar.
+                        if odd_acumulada >= 1000:
+                            break
+                            
+                    st.session_state.bilhete.extend(bilhete_milionario) 
                     tocar_som_alerta()
-                    st.error("🚨 Zebras adicionadas!")
-                else: st.warning("Nenhuma Zebra encontrada.")
+                    st.success(f"🚀 Bilhete Cashout ativado! Odd parcial adicionada: @{odd_acumulada:.2f}")
+                else: 
+                    st.warning("Poucos jogos para uma Odd 1000. Tente varrer uma liga com mais partidas hoje ou insira no manual.")
 
         st.markdown("<br><h4 class='neon-text'>OPORTUNIDADES IDENTIFICADAS</h4>", unsafe_allow_html=True)
         for idx, item in enumerate(st.session_state.analisados):
             if item['conf'] >= min_conf:
                 st.markdown(f"""
-                <div class='game-card'>
-                    <div style='display: flex; justify-content: space-between; align-items: center;'>
-                        <div style='width: 40%; font-weight: bold; font-size: 15px;'>{item['casa']}</div>
-                        <div style='width: 10%; text-align: center; color: #555; font-size: 12px; font-style: italic;'>VS</div>
-                        <div style='width: 40%; font-weight: bold; font-size: 15px; text-align: right;'>{item['fora']}</div>
-                    </div>
-                    
-                    <div style='margin-top: 15px; background-color: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;'>
-                        <div>
-                            <span style='font-size: 11px; color: #888;'>PREVISÃO IA:</span><br>
-                            <span style='color: {cor_neon}; font-weight: bold; font-size: 14px;'>{item['m']}</span>
-                        </div>
-                        <div style='text-align: right;'>
-                            <span style='font-size: 11px; color: #888;'>ODD CALC:</span><br>
-                            <span style='color: white; font-weight: bold; font-size: 16px;'>@{item['o']}</span>
-                        </div>
-                    </div>
-                    
-                    <div style='margin-top: 10px; width: 100%; background-color: rgba(0,0,0,0.5); border-radius: 5px; height: 4px; overflow: hidden;'>
-                        <div style='width: {item['conf']}%; height: 4px; background-color: {cor_neon}; box-shadow: 0 0 10px {cor_neon};'></div>
-                    </div>
-                    
-                    <div style='margin-top: 5px; display: flex; justify-content: space-between; font-size: 11px; color: #aaa;'>
-                        <span>🕒 {item['hora']}</span>
-                        <span>⚡ Confiança: {item['conf']}%</span>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+<div class='game-card'>
+    <div style='display: flex; justify-content: space-between; align-items: center;'>
+        <div style='width: 40%; font-weight: bold; font-size: 15px;'>{item['casa']}</div>
+        <div style='width: 10%; text-align: center; color: #555; font-size: 12px; font-style: italic;'>VS</div>
+        <div style='width: 40%; font-weight: bold; font-size: 15px; text-align: right;'>{item['fora']}</div>
+    </div>
+    
+    <div style='margin-top: 15px; background-color: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;'>
+        <div>
+            <span style='font-size: 11px; color: #888;'>PREVISÃO IA:</span><br>
+            <span style='color: {cor_neon}; font-weight: bold; font-size: 14px;'>{item['m']}</span>
+        </div>
+        <div style='text-align: right;'>
+            <span style='font-size: 11px; color: #888;'>ODD CALC:</span><br>
+            <span style='color: white; font-weight: bold; font-size: 16px;'>@{item['o']}</span>
+        </div>
+    </div>
+    
+    <div style='margin-top: 10px; width: 100%; background-color: rgba(0,0,0,0.5); border-radius: 5px; height: 4px; overflow: hidden;'>
+        <div style='width: {item['conf']}%; height: 4px; background-color: {cor_neon}; box-shadow: 0 0 10px {cor_neon};'></div>
+    </div>
+    
+    <div style='margin-top: 5px; display: flex; justify-content: space-between; font-size: 11px; color: #aaa;'>
+        <span>🕒 {item['hora']}</span>
+        <span>⚡ Confiança: {item['conf']}%</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
                 
                 if st.button(f"➕ ADICIONAR AO BILHETE", key=f"btn_{idx}"):
                     st.session_state.bilhete.append(item)
@@ -406,139 +418,4 @@ with t3:
                 st.success("Sinal enviado!")
         with col_b2:
             link_zap = f"https://api.whatsapp.com/send?text={urllib.parse.quote(final_msg_whats)}"
-            st.markdown(f'<a href="{link_zap}" target="_blank" class="btn-side" style="background: #25d366; margin:0;">🟢 ENVIAR ZAP</a>', unsafe_allow_html=True)
-            
-        st.markdown("---")
-        st.markdown("<p style='text-align:center; color:#888; font-size:12px;'>RESULTADOS DO BILHETE (ADMIN)</p>", unsafe_allow_html=True)
-        
-        # --- BOTÕES DE GREEN E RED DINÂMICOS ---
-        col_res1, col_res2, col_res3 = st.columns(3)
-        with col_res1:
-            if st.button("🟢 BATER GREEN", use_container_width=True):
-                qtd_jogos = len(st.session_state.bilhete)
-                st.session_state.total_jogos += qtd_jogos
-                st.session_state.total_acertos += qtd_jogos
-                st.session_state.roi_atual += 0.2 # Aumenta o ROI de leve
-                
-                # Joga os jogos pro topo do Histórico
-                for b in st.session_state.bilhete:
-                    st.session_state.historico_greens.insert(0, {"j": b['jogo'], "m": b['m'], "o": b['o']})
-                
-                # Mantém apenas os 15 últimos no histórico para não bugar a tela
-                st.session_state.historico_greens = st.session_state.historico_greens[:15]
-                
-                st.session_state.bilhete = [] # Limpa o bilhete
-                st.toast("✅ GREEN CONFIRMADO! Estatísticas atualizadas no Dashboard!")
-                st.balloons()
-                time.sleep(1)
-                st.rerun()
-
-        with col_res2:
-            if st.button("🔴 MARCAR RED", use_container_width=True):
-                st.session_state.total_jogos += len(st.session_state.bilhete)
-                st.session_state.roi_atual -= 0.1 # Cai o ROI
-                st.session_state.bilhete = []
-                st.toast("❌ Red registrado. Mais sorte na próxima.")
-                time.sleep(1)
-                st.rerun()
-                
-        with col_res3:
-            if st.button("🗑️ LIMPAR", use_container_width=True):
-                st.session_state.bilhete = []
-                st.rerun()
-
-    else:
-        st.info("Seu bilhete está vazio. Vá na aba RADAR e adicione partidas.")
-
-# ==========================================
-# ABA 4: BILHETE SAFE (Alto EV)
-# ==========================================
-with t4:
-    st.markdown("<h4 class='neon-text'>ALTO EV (SAFE)</h4>", unsafe_allow_html=True)
-    st.markdown("<p style='color:#bbb; font-size:14px;'>A Inteligência Artificial separou a entrada mais segura de hoje. Copie e cole na sua banca!</p>", unsafe_allow_html=True)
-    
-    hoje_str = datetime.now().strftime("%Y-%m-%d")
-    estado_aleatorio_atual = random.getstate()
-    random.seed(hoje_str)
-    
-    jogos_seguros_base = [
-        {"jogo": "Real Madrid x Adversário", "m": "Vitória Real Madrid", "o": 1.35},
-        {"jogo": "Manchester City x Adversário", "m": "Over 1.5 Gols", "o": 1.25},
-        {"jogo": "Bayern de Munique x Adversário", "m": "Over 1.5 Gols", "o": 1.22},
-        {"jogo": "Arsenal x Adversário", "m": "Vitória Arsenal", "o": 1.40}
-    ]
-    safe_pick = random.sample(jogos_seguros_base, 2)
-    random.setstate(estado_aleatorio_atual)
-    odd_safe_total = safe_pick[0]['o'] * safe_pick[1]['o']
-    
-    st.markdown(f"""
-    <div style='background-color: rgba(26,27,34,0.9); padding: 20px; border-radius: 12px; border: 1px solid #FFD700;'>
-        <div style='text-align:center; margin-bottom: 15px;'>
-            <span style='background:#FFD700; color:#000; padding:5px 15px; border-radius:20px; font-weight:bold; font-size:12px;'>🏆 IA ASSERTIVIDADE: 98%</span>
-        </div>
-        <div style='border-left: 4px solid #00ff88; padding-left: 10px; margin-bottom: 10px;'>
-            <div style='color:white; font-weight:bold; font-size: 16px;'>⚽ {safe_pick[0]['jogo']}</div>
-            <div style='color:#bbb; font-size: 14px;'>🎯 {safe_pick[0]['m']} | <span style='color:#00ff88; font-weight:bold;'>@{safe_pick[0]['o']:.2f}</span></div>
-        </div>
-        <div style='border-left: 4px solid #00ff88; padding-left: 10px; margin-bottom: 15px;'>
-            <div style='color:white; font-weight:bold; font-size: 16px;'>⚽ {safe_pick[1]['jogo']}</div>
-            <div style='color:#bbb; font-size: 14px;'>🎯 {safe_pick[1]['m']} | <span style='color:#00ff88; font-weight:bold;'>@{safe_pick[1]['o']:.2f}</span></div>
-        </div>
-        <hr style='border-color: rgba(255,215,0,0.3);'>
-        <h3 style='text-align:center; color:#FFD700; text-shadow: 0 0 10px #FFD700;'>📊 ODD FINAL: {odd_safe_total:.2f}</h3>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    if st.button("🔥 COPIAR SAFE PARA O MEU BILHETE", use_container_width=True):
-        st.session_state.bilhete.extend(safe_pick)
-        tocar_som_moeda()
-        st.success("✅ Bilhete Safe copiado com sucesso!")
-
-# ==========================================
-# ABA 5: PERFIL (Admin e Configurações)
-# ==========================================
-with t5:
-    st.markdown(f"<h3 style='color:{cor_neon}; text-align:center;'>👑 CEO & FOUNDER</h3>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align:center; color:#888; font-size:12px; margin-top:-10px;'>Ronny P. | Especialista em IA</p>", unsafe_allow_html=True)
-    st.markdown(f'<a href="https://instagram.com/ronny_olivzz61" target="_blank" class="btn-side" style="background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);">📸 SIGA @ronny_olivzz61</a>', unsafe_allow_html=True)
-    
-    st.markdown("---")
-    st.markdown(f"<h4 style='color:{cor_neon}; text-align:center; font-size: 14px;'>🎙️ BRIEFING DIÁRIO</h4>", unsafe_allow_html=True)
-    st.audio(LINK_SEU_AUDIO_BRIEFING, format="audio/mp3")
-
-    st.markdown("---")
-    st.markdown("<p style='color:#888; font-size:11px; font-weight:bold;'>ACESSOS RÁPIDOS</p>", unsafe_allow_html=True)
-    st.markdown(f'<a href="{LINK_CASA_1}" target="_blank" class="btn-side" style="background: {cor_neon}; color: #000 !important;">🎰 CASA RECOMENDADA</a>', unsafe_allow_html=True)
-    st.markdown(f'<a href="{LINK_SUPORTE}" target="_blank" class="btn-side" style="background: #25d366;">🟢 SUPORTE WHATSAPP</a>', unsafe_allow_html=True)
-    st.markdown(f'<a href="{LINK_CANAL}" target="_blank" class="btn-side" style="background: #0088cc;">🔵 CANAL TELEGRAM</a>', unsafe_allow_html=True)
-    
-    st.markdown("---")
-    st.markdown("<p style='color:#888; font-size:11px; font-weight:bold;'>🎨 PERSONALIZAR INTERFACE</p>", unsafe_allow_html=True)
-    st.selectbox(
-        "Escolha seu Neon:", 
-        ["Padrão (Por Gênero)", "🟢 Verde Hacker", "🟡 Ouro Milionário", "🔵 Azul Cyberpunk", "🔴 Vermelho Kamikaze", "🟣 Rosa Choque"],
-        key="tema_escolhido"
-    )
-    
-    st.markdown("---")
-    st.markdown("<p style='color:#888; font-size:11px; font-weight:bold;'>GESTÃO DE BANCA</p>", unsafe_allow_html=True)
-    banca = st.number_input("Banca Atual (R$):", value=100.0)
-    entrada = banca * 0.03
-    st.info(f"💰 Entrada Ideal (3%): R$ {entrada:.2f}")
-
-    if st.session_state.is_admin:
-        st.markdown("---")
-        st.markdown("<p style='color:#888; font-size:11px; font-weight:bold;'>GERADOR DE KEYS (ADMIN)</p>", unsafe_allow_html=True)
-        c_nome = st.text_input("Nome da Key:")
-        tempo_key = st.selectbox("Validade:", ["24 Horas", "7 Dias", "30 Dias"])
-        if st.button("CRIAR VIP"):
-            horas = 24 if tempo_key == "24 Horas" else (168 if tempo_key == "7 Dias" else 720)
-            salvar_key(c_nome, horas)
-            link_magico = f"{LINK_PAINEL}?key={c_nome}"
-            st.success(f"✅ Key {c_nome} gerada!")
-            st.code(link_magico, language="text")
-
-    st.markdown("<br><br>", unsafe_allow_html=True)
-    if st.button("SAIR DO APLICATIVO"):
-        st.session_state.autenticado = False
-        st.rerun()
+            st.markdown(f'<a href="{link_zap}" target="_blank" class="btn-side" style="background: #25d366; margin:0;">🟢
