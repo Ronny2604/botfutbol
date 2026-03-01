@@ -203,24 +203,26 @@ with t1:
 
     st.markdown("<p style='color: #888; font-size: 12px; margin-bottom: 5px; font-weight: bold;'>📊 TRACK RECORD — 30 DIAS (AO VIVO)</p>", unsafe_allow_html=True)
     
-    st.markdown(f"""
-<div class='stat-container'>
-    <div class='stat-box'><p class='stat-title'>Jogos</p><p class='stat-value'>{st.session_state.total_jogos}</p></div>
-    <div class='stat-box'><p class='stat-title'>Acertos</p><p class='stat-value green'>{st.session_state.total_acertos}</p></div>
-    <div class='stat-box'><p class='stat-title'>Win Rate</p><p class='stat-value'>{win_rate:.1f}%</p></div>
-    <div class='stat-box'><p class='stat-title'>ROI</p><p class='stat-value green'>+{st.session_state.roi_atual:.1f}%</p></div>
-</div>
-""", unsafe_allow_html=True)
+    html_stats = (
+        f"<div class='stat-container'>"
+        f"<div class='stat-box'><p class='stat-title'>Jogos</p><p class='stat-value'>{st.session_state.total_jogos}</p></div>"
+        f"<div class='stat-box'><p class='stat-title'>Acertos</p><p class='stat-value green'>{st.session_state.total_acertos}</p></div>"
+        f"<div class='stat-box'><p class='stat-title'>Win Rate</p><p class='stat-value'>{win_rate:.1f}%</p></div>"
+        f"<div class='stat-box'><p class='stat-title'>ROI</p><p class='stat-value green'>+{st.session_state.roi_atual:.1f}%</p></div>"
+        f"</div>"
+    )
+    st.markdown(html_stats, unsafe_allow_html=True)
 
     st.markdown("<h4 style='color:white; margin-top: 20px;'>🏆 ÚLTIMOS GREENS DO VIP</h4>", unsafe_allow_html=True)
     
     for h in st.session_state.historico_greens:
-        st.markdown(f"""
-<div style='background-color: rgba(26,27,34,0.9); border-left: 5px solid #00ff88; padding: 15px; margin-bottom: 10px; border-radius: 6px;'>
-    <div style='color:white; font-weight:bold; font-size: 16px;'>{h['j']}</div>
-    <div style='color:#bbb; font-size: 14px; margin-top:5px;'>🎯 {h['m']} | <span style='color:#00ff88; font-weight:bold; font-size: 16px;'>@{h['o']} ✅ GREEN</span></div>
-</div>
-""", unsafe_allow_html=True)
+        html_historico = (
+            f"<div style='background-color: rgba(26,27,34,0.9); border-left: 5px solid #00ff88; padding: 15px; margin-bottom: 10px; border-radius: 6px;'>"
+            f"<div style='color:white; font-weight:bold; font-size: 16px;'>{h['j']}</div>"
+            f"<div style='color:#bbb; font-size: 14px; margin-top:5px;'>🎯 {h['m']} | <span style='color:#00ff88; font-weight:bold; font-size: 16px;'>@{h['o']} ✅ GREEN</span></div>"
+            f"</div>"
+        )
+        st.markdown(html_historico, unsafe_allow_html=True)
 
 # ==========================================
 # ABA 2: RADAR (IA e Manual)
@@ -324,11 +326,9 @@ with t2:
                     st.success("✅ Dupla adicionada!")
                 else: st.warning("Preciso de pelo menos 2 jogos varridos.")
         
-        # --- NOVO BOTÃO: PROJETO ODD 1000 ---
         with col_m2:
             if st.button("🚀 PROJETO ODD 1.000"):
                 if len(st.session_state.analisados) >= 4:
-                    # Pega os jogos com maior confiança primeiro
                     jogos_ordenados = sorted(st.session_state.analisados, key=lambda x: x['conf'], reverse=True)
                     bilhete_milionario = []
                     odd_acumulada = 1.0
@@ -336,7 +336,6 @@ with t2:
                     for jogo in jogos_ordenados:
                         bilhete_milionario.append(jogo)
                         odd_acumulada *= jogo['o']
-                        # Se já chegou perto ou passou de 1000, para de adicionar.
                         if odd_acumulada >= 1000:
                             break
                             
@@ -349,35 +348,26 @@ with t2:
         st.markdown("<br><h4 class='neon-text'>OPORTUNIDADES IDENTIFICADAS</h4>", unsafe_allow_html=True)
         for idx, item in enumerate(st.session_state.analisados):
             if item['conf'] >= min_conf:
-                st.markdown(f"""
-<div class='game-card'>
-    <div style='display: flex; justify-content: space-between; align-items: center;'>
-        <div style='width: 40%; font-weight: bold; font-size: 15px;'>{item['casa']}</div>
-        <div style='width: 10%; text-align: center; color: #555; font-size: 12px; font-style: italic;'>VS</div>
-        <div style='width: 40%; font-weight: bold; font-size: 15px; text-align: right;'>{item['fora']}</div>
-    </div>
-    
-    <div style='margin-top: 15px; background-color: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;'>
-        <div>
-            <span style='font-size: 11px; color: #888;'>PREVISÃO IA:</span><br>
-            <span style='color: {cor_neon}; font-weight: bold; font-size: 14px;'>{item['m']}</span>
-        </div>
-        <div style='text-align: right;'>
-            <span style='font-size: 11px; color: #888;'>ODD CALC:</span><br>
-            <span style='color: white; font-weight: bold; font-size: 16px;'>@{item['o']}</span>
-        </div>
-    </div>
-    
-    <div style='margin-top: 10px; width: 100%; background-color: rgba(0,0,0,0.5); border-radius: 5px; height: 4px; overflow: hidden;'>
-        <div style='width: {item['conf']}%; height: 4px; background-color: {cor_neon}; box-shadow: 0 0 10px {cor_neon};'></div>
-    </div>
-    
-    <div style='margin-top: 5px; display: flex; justify-content: space-between; font-size: 11px; color: #aaa;'>
-        <span>🕒 {item['hora']}</span>
-        <span>⚡ Confiança: {item['conf']}%</span>
-    </div>
-</div>
-""", unsafe_allow_html=True)
+                html_card = (
+                    f"<div class='game-card'>"
+                    f"<div style='display: flex; justify-content: space-between; align-items: center;'>"
+                    f"<div style='width: 40%; font-weight: bold; font-size: 15px;'>{item['casa']}</div>"
+                    f"<div style='width: 10%; text-align: center; color: #555; font-size: 12px; font-style: italic;'>VS</div>"
+                    f"<div style='width: 40%; font-weight: bold; font-size: 15px; text-align: right;'>{item['fora']}</div>"
+                    f"</div>"
+                    f"<div style='margin-top: 15px; background-color: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;'>"
+                    f"<div><span style='font-size: 11px; color: #888;'>PREVISÃO IA:</span><br><span style='color: {cor_neon}; font-weight: bold; font-size: 14px;'>{item['m']}</span></div>"
+                    f"<div style='text-align: right;'><span style='font-size: 11px; color: #888;'>ODD CALC:</span><br><span style='color: white; font-weight: bold; font-size: 16px;'>@{item['o']}</span></div>"
+                    f"</div>"
+                    f"<div style='margin-top: 10px; width: 100%; background-color: rgba(0,0,0,0.5); border-radius: 5px; height: 4px; overflow: hidden;'>"
+                    f"<div style='width: {item['conf']}%; height: 4px; background-color: {cor_neon}; box-shadow: 0 0 10px {cor_neon};'></div>"
+                    f"</div>"
+                    f"<div style='margin-top: 5px; display: flex; justify-content: space-between; font-size: 11px; color: #aaa;'>"
+                    f"<span>🕒 {item['hora']}</span><span>⚡ Confiança: {item['conf']}%</span>"
+                    f"</div>"
+                    f"</div>"
+                )
+                st.markdown(html_card, unsafe_allow_html=True)
                 
                 if st.button(f"➕ ADICIONAR AO BILHETE", key=f"btn_{idx}"):
                     st.session_state.bilhete.append(item)
@@ -479,23 +469,16 @@ with t4:
     random.setstate(estado_aleatorio_atual)
     odd_safe_total = safe_pick[0]['o'] * safe_pick[1]['o']
     
-    st.markdown(f"""
-<div style='background-color: rgba(26,27,34,0.9); padding: 20px; border-radius: 12px; border: 1px solid #FFD700;'>
-    <div style='text-align:center; margin-bottom: 15px;'>
-        <span style='background:#FFD700; color:#000; padding:5px 15px; border-radius:20px; font-weight:bold; font-size:12px;'>🏆 IA ASSERTIVIDADE: 98%</span>
-    </div>
-    <div style='border-left: 4px solid #00ff88; padding-left: 10px; margin-bottom: 10px;'>
-        <div style='color:white; font-weight:bold; font-size: 16px;'>⚽ {safe_pick[0]['jogo']}</div>
-        <div style='color:#bbb; font-size: 14px;'>🎯 {safe_pick[0]['m']} | <span style='color:#00ff88; font-weight:bold;'>@{safe_pick[0]['o']:.2f}</span></div>
-    </div>
-    <div style='border-left: 4px solid #00ff88; padding-left: 10px; margin-bottom: 15px;'>
-        <div style='color:white; font-weight:bold; font-size: 16px;'>⚽ {safe_pick[1]['jogo']}</div>
-        <div style='color:#bbb; font-size: 14px;'>🎯 {safe_pick[1]['m']} | <span style='color:#00ff88; font-weight:bold;'>@{safe_pick[1]['o']:.2f}</span></div>
-    </div>
-    <hr style='border-color: rgba(255,215,0,0.3);'>
-    <h3 style='text-align:center; color:#FFD700; text-shadow: 0 0 10px #FFD700;'>📊 ODD FINAL: {odd_safe_total:.2f}</h3>
-</div>
-""", unsafe_allow_html=True)
+    html_safe = (
+        f"<div style='background-color: rgba(26,27,34,0.9); padding: 20px; border-radius: 12px; border: 1px solid #FFD700;'>"
+        f"<div style='text-align:center; margin-bottom: 15px;'><span style='background:#FFD700; color:#000; padding:5px 15px; border-radius:20px; font-weight:bold; font-size:12px;'>🏆 IA ASSERTIVIDADE: 98%</span></div>"
+        f"<div style='border-left: 4px solid #00ff88; padding-left: 10px; margin-bottom: 10px;'><div style='color:white; font-weight:bold; font-size: 16px;'>⚽ {safe_pick[0]['jogo']}</div><div style='color:#bbb; font-size: 14px;'>🎯 {safe_pick[0]['m']} | <span style='color:#00ff88; font-weight:bold;'>@{safe_pick[0]['o']:.2f}</span></div></div>"
+        f"<div style='border-left: 4px solid #00ff88; padding-left: 10px; margin-bottom: 15px;'><div style='color:white; font-weight:bold; font-size: 16px;'>⚽ {safe_pick[1]['jogo']}</div><div style='color:#bbb; font-size: 14px;'>🎯 {safe_pick[1]['m']} | <span style='color:#00ff88; font-weight:bold;'>@{safe_pick[1]['o']:.2f}</span></div></div>"
+        f"<hr style='border-color: rgba(255,215,0,0.3);'>"
+        f"<h3 style='text-align:center; color:#FFD700; text-shadow: 0 0 10px #FFD700;'>📊 ODD FINAL: {odd_safe_total:.2f}</h3>"
+        f"</div>"
+    )
+    st.markdown(html_safe, unsafe_allow_html=True)
     
     if st.button("🔥 COPIAR SAFE PARA O MEU BILHETE", use_container_width=True):
         st.session_state.bilhete.extend(safe_pick)
