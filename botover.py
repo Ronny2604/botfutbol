@@ -77,9 +77,12 @@ def calcular_forca_equipa(nome_equipa):
 @st.cache_data(ttl=600, show_spinner=False)
 def buscar_dados_api(codigo_da_liga):
     url = f"https://api.the-odds-api.com/v4/sports/{codigo_da_liga}/odds/?apiKey={ODDS_API_KEY}&regions=eu,uk&markets=h2h,totals"
-    resposta = requests.get(url)
-    if resposta.status_code == 200:
-        return resposta.json()
+    try:
+        resposta = requests.get(url, timeout=10)
+        if resposta.status_code == 200:
+            return resposta.json()
+    except:
+        pass
     return None
 
 # --- 3. INICIALIZAÇÃO E ESTADOS DINÂMICOS ---
@@ -126,7 +129,7 @@ elif tema == "🔴 Vermelho Kamikaze": cor_neon = "#ff3333"
 elif tema == "🟣 Rosa Choque": cor_neon = "#ff00ff"
 else: cor_neon = "#ff00ff" if is_fem else "#00ff88"
 
-# --- 4. CSS FOOTI PREMIUM + BARRA INFERIOR CORRIGIDA ---
+# --- 4. CSS FOOTI PREMIUM + ANIMAÇÕES DE BOTÕES ---
 st.markdown(f"""
     <style>
     #MainMenu {{visibility: hidden !important;}}
@@ -142,55 +145,37 @@ st.markdown(f"""
         animation: fadeIn 0.8s ease-out; color: #ffffff;
     }}
     
-    /* GERA ESPAÇO NO FUNDO PARA A BARRA INFERIOR NÃO COBRIR O TEXTO */
-    .main .block-container {{
-        padding-bottom: 120px !important;
-    }}
-
-    /* === MÁGICA DA BARRA INFERIOR À PROVA DE BUGS === */
+    /* MENU NATIVO PREMIUM NO TOPO */
     div[data-testid="stTabs"] > div:first-of-type {{
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        right: 0 !important;
-        width: 100% !important;
-        background-color: #0f1015 !important;
-        z-index: 99999 !important;
-        display: flex !important;
+        background-color: rgba(26, 27, 34, 0.9) !important;
+        border-radius: 12px !important;
+        padding: 5px !important;
+        border: 1px solid #2d2f36 !important;
+        margin-bottom: 20px !important;
         justify-content: space-evenly !important;
-        padding: 5px 0px 20px 0px !important; /* Espaço para a barra de home do iPhone */
-        border-top: 1px solid #2d2f36 !important;
-        box-shadow: 0px -5px 15px rgba(0,0,0,0.8) !important;
     }}
-
-    /* ESTILO DOS BOTÕES DA BARRA INFERIOR */
     div[data-testid="stTabs"] button[role="tab"] {{
         flex: 1 !important;
+        color: #888 !important;
+        font-weight: bold !important;
+        font-size: 11px !important;
         background: transparent !important;
         border: none !important;
-        color: #777777 !important;
-        font-size: 10px !important; /* Letra menor para caber na tela do celular */
-        font-weight: 800 !important;
-        padding: 10px 5px !important;
         white-space: nowrap !important;
+        transition: color 0.3s ease !important;
     }}
-
-    /* BOTÃO ATIVO NA BARRA INFERIOR */
+    div[data-testid="stTabs"] button[role="tab"]:hover {{
+        color: #fff !important;
+    }}
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {{
         color: {cor_neon} !important;
+        background-color: rgba(255,255,255,0.05) !important;
+        border-radius: 8px !important;
         border-bottom: none !important;
-        border-top: 3px solid {cor_neon} !important;
-        background-color: rgba(255, 255, 255, 0.05) !important;
-    }}
-
-    /* Ocultar scrollbars horizontais extras nas abas */
-    div[data-testid="stTabs"] > div:first-of-type::-webkit-scrollbar {{
-        display: none !important;
     }}
     
-    /* ESTILOS GERAIS DOS CARDS */
     .neon-text {{ color: {cor_neon}; font-weight: bold; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }}
-    .header-destaque {{ text-align: left; color: #ffffff; font-size: 32px; font-weight: 900; font-style: italic; margin-top: -30px; line-height: 1.1; }}
+    .header-destaque {{ text-align: left; color: #ffffff; font-size: 32px; font-weight: 900; font-style: italic; margin-top: -10px; line-height: 1.1; }}
     
     .stat-container {{ display: flex; justify-content: space-between; background-color: rgba(26, 27, 34, 0.8); border-radius: 8px; border: 1px solid #2d2f36; padding: 15px; margin-bottom: 20px; }}
     .stat-box {{ text-align: center; width: 24%; border-right: 1px solid #333; }}
@@ -199,20 +184,46 @@ st.markdown(f"""
     .stat-value {{ font-size: 22px; font-weight: 900; margin: 5px 0 0 0; }}
     .stat-value.green {{ color: {cor_neon}; }}
     
-    .game-card {{ background-color: rgba(26, 27, 34, 0.9); padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #333; transition: 0.3s; border-top: 1px solid #2d2f36; border-right: 1px solid #2d2f36; border-bottom: 1px solid #2d2f36; }}
+    .game-card {{ background-color: rgba(26, 27, 34, 0.9); padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #333; transition: all 0.3s ease; border-top: 1px solid #2d2f36; border-right: 1px solid #2d2f36; border-bottom: 1px solid #2d2f36; }}
     .game-card:hover {{ border-left: 4px solid {cor_neon}; box-shadow: 0 4px 15px rgba(0,0,0,0.5); transform: translateY(-2px); }}
     
-    .btn-side {{ display: block; padding: 12px; margin-bottom: 10px; text-align: center; border-radius: 8px; font-weight: bold; text-decoration: none; color: white !important; font-size: 14px; transition: 0.3s; }}
-    .stButton>button {{ background: {cor_neon} !important; color: #000 !important; font-weight: 900 !important; border-radius: 8px !important; border: none !important; transition: 0.3s; padding: 10px 20px !important; width: 100%; }}
-    .stButton>button:hover {{ transform: scale(1.02); filter: brightness(1.2); }}
+    /* === ANIMAÇÕES DE BOTÕES (HOVER E CLICK) === */
+    .stButton>button {{ 
+        background: {cor_neon} !important; 
+        color: #000 !important; 
+        font-weight: 900 !important; 
+        border-radius: 8px !important; 
+        border: none !important; 
+        padding: 10px 20px !important; 
+        width: 100%; 
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
+    }}
+    /* Efeito Hover (Brilho e Flutuação) */
+    .stButton>button:hover {{ 
+        transform: translateY(-3px) scale(1.02) !important; 
+        filter: brightness(1.1) !important; 
+        box-shadow: 0 8px 20px {cor_neon}60 !important;
+    }}
+    /* Efeito Click (Mola/Pressionar) */
+    .stButton>button:active {{ 
+        transform: translateY(2px) scale(0.95) !important; 
+        box-shadow: 0 2px 4px {cor_neon}40 !important;
+        filter: brightness(0.9) !important;
+    }}
+    
+    .btn-side {{ display: block; padding: 12px; margin-bottom: 10px; text-align: center; border-radius: 8px; font-weight: bold; text-decoration: none; color: white !important; font-size: 14px; transition: all 0.2s ease; }}
+    .btn-side:hover {{ transform: translateY(-3px) scale(1.02); filter: brightness(1.1); box-shadow: 0 8px 15px rgba(255,255,255,0.1); }}
+    .btn-side:active {{ transform: translateY(1px) scale(0.95); }}
     
     .story-card {{ background: linear-gradient(180deg, #1a1b22 0%, #0f1015 100%); padding: 30px; border-radius: 20px; border: 2px solid {cor_neon}; box-shadow: 0 0 30px {cor_neon}40; text-align: center; position: relative; overflow: hidden; }}
     .story-watermark {{ position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 60px; color: rgba(255,255,255,0.03); white-space: nowrap; font-weight: 900; pointer-events: none; }}
     
     .blur-overlay {{ filter: blur(8px); pointer-events: none; user-select: none; opacity: 0.6; }}
-    .lock-icon {{ position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; text-align: center; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 12px; border: 1px solid {cor_neon}; box-shadow: 0 0 20px #000; width: 80%; }}
+    .lock-icon {{ position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; text-align: center; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 12px; border: 1px solid {cor_neon}; box-shadow: 0 0 20px #000; width: 80%; transition: transform 0.3s ease; }}
+    .lock-icon:hover {{ transform: translate(-50%, -50%) scale(1.05); }}
     
-    .live-badge {{ background-color: #ff3333; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; animation: blink 2s infinite; }}
+    .live-badge {{ background-color: #ff3333; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; animation: blink 2s infinite; display: inline-block; }}
     @keyframes blink {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.4; }} 100% {{ opacity: 1; }} }}
     </style>
 """, unsafe_allow_html=True)
@@ -251,7 +262,8 @@ if not st.session_state.autenticado:
 
 win_rate = (st.session_state.total_acertos / st.session_state.total_jogos) * 100 if st.session_state.total_jogos > 0 else 0
 
-# --- 6. NAVEGAÇÃO PRINCIPAL (ABAS NA BARRA INFERIOR) ---
+# --- 6. NAVEGAÇÃO PRINCIPAL (ABAS NO TOPO ESTILIZADAS) ---
+st.markdown("<br>", unsafe_allow_html=True)
 t1, t2, t3, t4, t5 = st.tabs(["🏠 INÍCIO", "🎯 RADAR", "📋 BILHETE", "🛡️ SAFE", "⚙️ PERFIL"])
 
 LIGAS_DISPONIVEIS = {
@@ -289,11 +301,11 @@ with t1:
     html_live = (
         f"<div style='background-color: rgba(26,27,34,0.9); border-left: 3px solid #ff3333; padding: 10px 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;'>"
         f"<div><span class='live-badge'>65'</span> <span style='color:white; font-weight:bold; font-size: 14px; margin-left: 10px;'>Arsenal 1 x 0 Chelsea</span></div>"
-        f"<div style='color:#bbb; font-size: 12px;'>A nossa IA previu: <span style='color:{cor_neon}; font-weight:bold;'>Vitória Arsenal</span></div>"
+        f"<div style='color:#bbb; font-size: 12px;'>IA previu: <span style='color:{cor_neon}; font-weight:bold;'>Vitória Arsenal</span></div>"
         f"</div>"
         f"<div style='background-color: rgba(26,27,34,0.9); border-left: 3px solid #ff3333; padding: 10px 15px; margin-bottom: 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;'>"
         f"<div><span class='live-badge'>82'</span> <span style='color:white; font-weight:bold; font-size: 14px; margin-left: 10px;'>Flamengo 2 x 1 Vasco</span></div>"
-        f"<div style='color:#bbb; font-size: 12px;'>A nossa IA previu: <span style='color:{cor_neon}; font-weight:bold;'>Mais de 2.5 Gols</span></div>"
+        f"<div style='color:#bbb; font-size: 12px;'>IA previu: <span style='color:{cor_neon}; font-weight:bold;'>Mais 2.5 Gols</span></div>"
         f"</div>"
     )
     st.markdown(html_live, unsafe_allow_html=True)
