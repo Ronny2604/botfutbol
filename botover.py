@@ -65,18 +65,15 @@ def get_saudacao():
     elif 12 <= hora < 18: return "☀️ Boa tarde"
     else: return "🌙 Boa noite"
 
-# SIMULADOR DE FORÇA (FIM DO RANDOM PURO)
-# Esta função usa o nome da equipa para gerar estatísticas consistentes. 
-# O Real Madrid terá sempre a mesma força calculada hoje.
+# SIMULADOR DE FORÇA 
 def calcular_forca_equipa(nome_equipa):
     hash_object = hashlib.md5(nome_equipa.encode())
     numero_base = int(hash_object.hexdigest(), 16)
-    atk = 60 + (numero_base % 35) # Entre 60 e 95
-    dfs = 50 + ((numero_base // 10) % 40) # Entre 50 e 90
+    atk = 60 + (numero_base % 35) 
+    dfs = 50 + ((numero_base // 10) % 40) 
     return atk, dfs
 
-# SISTEMA DE CACHING (VELOCIDADE EXTREMA)
-# Guarda os dados da API por 10 minutos para não gastar a sua quota.
+# SISTEMA DE CACHING
 @st.cache_data(ttl=600, show_spinner=False)
 def buscar_dados_api(codigo_da_liga):
     url = f"https://api.the-odds-api.com/v4/sports/{codigo_da_liga}/odds/?apiKey={ODDS_API_KEY}&regions=eu,uk&markets=h2h,totals"
@@ -96,7 +93,6 @@ if 'tema_escolhido' not in st.session_state: st.session_state.tema_escolhido = "
 if 'modo_story' not in st.session_state: st.session_state.modo_story = False
 if 'is_vip' not in st.session_state: st.session_state.is_vip = True 
 
-# Escolhe um link de afiliado aleatório para esta sessão
 if 'link_afiliado_ativo' not in st.session_state: 
     st.session_state.link_afiliado_ativo = random.choice(LINKS_AFILIADOS)
 
@@ -130,7 +126,7 @@ elif tema == "🔴 Vermelho Kamikaze": cor_neon = "#ff3333"
 elif tema == "🟣 Rosa Choque": cor_neon = "#ff00ff"
 else: cor_neon = "#ff00ff" if is_fem else "#00ff88"
 
-# --- 4. CSS FOOTI PREMIUM ---
+# --- 4. CSS FOOTI PREMIUM + BARRA INFERIOR CORRIGIDA ---
 st.markdown(f"""
     <style>
     #MainMenu {{visibility: hidden !important;}}
@@ -146,6 +142,53 @@ st.markdown(f"""
         animation: fadeIn 0.8s ease-out; color: #ffffff;
     }}
     
+    /* GERA ESPAÇO NO FUNDO PARA A BARRA INFERIOR NÃO COBRIR O TEXTO */
+    .main .block-container {{
+        padding-bottom: 120px !important;
+    }}
+
+    /* === MÁGICA DA BARRA INFERIOR À PROVA DE BUGS === */
+    div[data-testid="stTabs"] > div:first-of-type {{
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        background-color: #0f1015 !important;
+        z-index: 99999 !important;
+        display: flex !important;
+        justify-content: space-evenly !important;
+        padding: 5px 0px 20px 0px !important; /* Espaço para a barra de home do iPhone */
+        border-top: 1px solid #2d2f36 !important;
+        box-shadow: 0px -5px 15px rgba(0,0,0,0.8) !important;
+    }}
+
+    /* ESTILO DOS BOTÕES DA BARRA INFERIOR */
+    div[data-testid="stTabs"] button[role="tab"] {{
+        flex: 1 !important;
+        background: transparent !important;
+        border: none !important;
+        color: #777777 !important;
+        font-size: 10px !important; /* Letra menor para caber na tela do celular */
+        font-weight: 800 !important;
+        padding: 10px 5px !important;
+        white-space: nowrap !important;
+    }}
+
+    /* BOTÃO ATIVO NA BARRA INFERIOR */
+    div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {{
+        color: {cor_neon} !important;
+        border-bottom: none !important;
+        border-top: 3px solid {cor_neon} !important;
+        background-color: rgba(255, 255, 255, 0.05) !important;
+    }}
+
+    /* Ocultar scrollbars horizontais extras nas abas */
+    div[data-testid="stTabs"] > div:first-of-type::-webkit-scrollbar {{
+        display: none !important;
+    }}
+    
+    /* ESTILOS GERAIS DOS CARDS */
     .neon-text {{ color: {cor_neon}; font-weight: bold; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }}
     .header-destaque {{ text-align: left; color: #ffffff; font-size: 32px; font-weight: 900; font-style: italic; margin-top: -30px; line-height: 1.1; }}
     
@@ -208,8 +251,7 @@ if not st.session_state.autenticado:
 
 win_rate = (st.session_state.total_acertos / st.session_state.total_jogos) * 100 if st.session_state.total_jogos > 0 else 0
 
-# --- 6. NAVEGAÇÃO PRINCIPAL (ABAS NATIVAS) ---
-st.markdown("<br>", unsafe_allow_html=True)
+# --- 6. NAVEGAÇÃO PRINCIPAL (ABAS NA BARRA INFERIOR) ---
 t1, t2, t3, t4, t5 = st.tabs(["🏠 INÍCIO", "🎯 RADAR", "📋 BILHETE", "🛡️ SAFE", "⚙️ PERFIL"])
 
 LIGAS_DISPONIVEIS = {
@@ -243,7 +285,6 @@ with t1:
     )
     st.markdown(html_stats, unsafe_allow_html=True)
 
-    # --- NOVO: SIMULADOR DE LIVE SCORES ---
     st.markdown("<h4 style='color:white; margin-top: 20px;'>🔴 JOGOS A DECORRER</h4>", unsafe_allow_html=True)
     html_live = (
         f"<div style='background-color: rgba(26,27,34,0.9); border-left: 3px solid #ff3333; padding: 10px 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;'>"
@@ -300,7 +341,7 @@ with t2:
     if st.button("🚨 PROCESSAR DADOS IA"):
         with st.status("A iniciar Protocolo V8 Supreme via CACHE...", expanded=True) as status:
             st.write("⏳ Procurando dados em alta velocidade...")
-            dados = buscar_dados_api(codigo_da_liga) # Usa o Caching
+            dados = buscar_dados_api(codigo_da_liga) 
             
             if dados:
                 st.session_state.analisados = []
@@ -327,7 +368,7 @@ with t2:
 
                     if mercados_encontrados:
                         melhor_aposta = random.choice(mercados_encontrados)
-                        atk, dfs = calcular_forca_equipa(casa) # Fim do Random para Tática
+                        atk, dfs = calcular_forca_equipa(casa)
                         
                         st.session_state.analisados.append({
                             "jogo": nome_jogo, "casa": casa, "fora": fora, "hora": hora_jogo.strftime("%H:%M"),
@@ -439,7 +480,6 @@ with t3:
             retorno = valor_aposta * odd_f
             st.info(f"🤑 RETORNO ESPERADO: R$ {retorno:.2f}")
             
-            # --- ROTAÇÃO DO LINK DE AFILIADO AQUI ---
             final_msg_whats = msg_whats + f"📊 *Odd Total: {odd_f:.2f}*\n💸 Aposta: R$ {valor_aposta:.2f}\n🤑 Retorno: R$ {retorno:.2f}\n\n🎰 APOSTE AQUI: {st.session_state.link_afiliado_ativo}"
             
             col_b1, col_b2 = st.columns(2)
