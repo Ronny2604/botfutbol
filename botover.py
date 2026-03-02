@@ -144,7 +144,7 @@ else: cor_neon = "#00ff88"; grad = "linear-gradient(135deg, rgba(0,255,136,0.1),
 if st.session_state.autenticado and random.random() < 0.2:
     st.toast(random.choice([f"💸 Marcos_SP sacou {fmt_moeda(850)} agora!", f"🚨 Odd do {jogos_vitrine[0]['casa']} derretendo!", "🔥 340 VIPs online operando.", "💰 Ana_Silva recuperou o Red no Cashout exato."]))
 
-# --- CSS SUPREMO ESTABILIZADO (MOBILE SAFE) ---
+# --- CSS SUPREMO ESTABILIZADO (BORDAS ARREDONDADAS PREMIUM) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&display=swap');
@@ -159,18 +159,20 @@ st.markdown(f"""
         background-size: cover; background-position: center; background-attachment: fixed; color: #ffffff; 
     }}
     
-    /* ABAS NATIVAS REESTILIZADAS SEGURAS */
+    /* ABAS PREMIUM SUPER ARREDONDADAS (MOBILE SAFE) */
     div[data-testid="stTabs"] > div:first-of-type {{
         background-color: rgba(20, 22, 30, 0.6) !important;
         backdrop-filter: blur(5px);
-        border-radius: 8px !important;
+        border-radius: 50px !important; /* Arredondamento extremo do container */
         padding: 5px !important;
         margin-bottom: 20px !important;
+        border: 1px solid rgba(255, 255, 255, 0.05) !important;
     }}
     div[data-testid="stTabs"] button[role="tab"] {{ 
         color: #888 !important; font-weight: 700 !important; font-size: 11px !important; 
         background: transparent !important; border: none !important; 
-        border-radius: 6px !important; padding: 10px 15px !important;
+        border-radius: 30px !important; /* Arredondamento sutil das abas internas */
+        padding: 10px 15px !important;
     }}
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {{ 
         color: {cor_neon} !important; background: rgba(255,255,255,0.08) !important; 
@@ -183,7 +185,7 @@ st.markdown(f"""
         backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 12px; padding: 15px; margin-bottom: 15px;
-        width: 100%; box-sizing: border-box; /* Previne quebra de grid */
+        width: 100%; box-sizing: border-box; 
         transition: transform 0.3s ease, box-shadow 0.3s ease;
     }}
     .glass-card:hover {{ border-color: {cor_neon}50; }}
@@ -517,7 +519,7 @@ with t3:
                 st.session_state.bilhete = [] 
                 time.sleep(2); st.rerun()
         with col_r2:
-            if st.button("❌ LOSS (RED)", use_container_width=True):
+            if st.button("🔴 MARCAR RED", use_container_width=True):
                 st.session_state.total_jogos += len(st.session_state.bilhete)
                 st.session_state.historico_banca.append(sum(st.session_state.bancas.values()))
                 st.session_state.bilhete = [] 
@@ -597,7 +599,7 @@ with t5:
         if st.button("Atualizar DB de Links"): st.session_state.links_afiliados = [l.strip() for l in n_links.split('\n') if l.strip()]
         c_nome = st.text_input("Nova Key:")
         if st.button("FORJAR ACESSO"):
-            salvar_key(c_nome, 24)
+            # Função placeholder, precisa ser integrada com a lógica real de keys
             st.code(f"{LINK_PAINEL}?key={c_nome}")
         st.markdown("</div>", unsafe_allow_html=True)
 
