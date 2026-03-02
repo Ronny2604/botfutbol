@@ -36,6 +36,7 @@ if 'autenticado' not in st.session_state: st.session_state.autenticado = False
 if 'user_nome' not in st.session_state: st.session_state.user_nome = ""
 if 'bilhete' not in st.session_state: st.session_state.bilhete = []
 if 'analisados' not in st.session_state: st.session_state.analisados = []
+if 'analises_salvas' not in st.session_state: st.session_state.analises_salvas = [] # NOVO: Tracking de Singles
 if 'tema_escolhido' not in st.session_state: st.session_state.tema_escolhido = "🟢 Verde Hacker"
 if 'is_vip' not in st.session_state: st.session_state.is_vip = True 
 if 'boss_mode' not in st.session_state: st.session_state.boss_mode = False
@@ -159,11 +160,11 @@ st.markdown(f"""
         background-size: cover; background-position: center; background-attachment: fixed; color: #ffffff; 
     }}
     
-    /* ABAS PREMIUM SUPER ARREDONDADAS (MOBILE SAFE) */
+    /* ABAS PREMIUM SUPER ARREDONDADAS */
     div[data-testid="stTabs"] > div:first-of-type {{
         background-color: rgba(20, 22, 30, 0.6) !important;
         backdrop-filter: blur(5px);
-        border-radius: 50px !important; /* Arredondamento extremo do container */
+        border-radius: 50px !important; 
         padding: 5px !important;
         margin-bottom: 20px !important;
         border: 1px solid rgba(255, 255, 255, 0.05) !important;
@@ -171,7 +172,7 @@ st.markdown(f"""
     div[data-testid="stTabs"] button[role="tab"] {{ 
         color: #888 !important; font-weight: 700 !important; font-size: 11px !important; 
         background: transparent !important; border: none !important; 
-        border-radius: 30px !important; /* Arredondamento sutil das abas internas */
+        border-radius: 30px !important; 
         padding: 10px 15px !important;
     }}
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {{ 
@@ -179,7 +180,7 @@ st.markdown(f"""
         border-bottom: 2px solid {cor_neon} !important;
     }}
     
-    /* GLASS CARDS ESTABILIZADOS (WIDTH 100%) */
+    /* GLASS CARDS ESTABILIZADOS */
     .glass-card {{
         background: rgba(26, 28, 36, 0.6);
         backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -255,7 +256,6 @@ if not st.session_state.autenticado:
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# Variaveis Globais Ativas
 win_rate = (st.session_state.total_acertos / st.session_state.total_jogos) * 100 if st.session_state.total_jogos > 0 else 0
 saldo_total = sum(st.session_state.bancas.values())
 
@@ -277,7 +277,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # --- 6. NAVEGAÇÃO PRINCIPAL ---
-t1, t2, t3, t4, t5 = st.tabs(["📊 HOME", "🎯 RADAR", "🧾 BILHETE", "🛡️ SAFE", "⚙️ PERFIL"])
+t1, t2, t3, t4, t5 = st.tabs(["📊 HOME", "🎯 RADAR", "🧾 OPERAÇÕES", "🛡️ SAFE", "⚙️ PERFIL"])
 
 LIGAS_DISPONIVEIS = {"🇬🇧 Premier League": "soccer_epl", "🇪🇺 Champions League": "soccer_uefa_champs_league", "🇪🇸 La Liga": "soccer_spain_la_liga", "🇧🇷 Brasileirão": "soccer_brazil_campeonato"}
 
@@ -345,27 +345,6 @@ with t2:
             </div>
         """, unsafe_allow_html=True)
 
-    j_lesao = jogos_vitrine[3]['casa']
-    st.markdown(f"""
-        <div class='glass-card' style='border-left: 4px solid #ff3333; background: rgba(255,51,51,0.05);'>
-            <span style='color:#ff3333; font-weight:900; font-size:12px;'>🚨 INSIDER INFO:</span><br>
-            <span style='color:#ccc; font-size:13px;'>Queda na força defensiva do <b>{j_lesao}</b> confirmada há 10 mins. Valor aberto no <b>Over Gols</b>.</span>
-        </div>
-    """, unsafe_allow_html=True)
-
-    with st.expander("⚖️ SCANNER DE ARBITRAGEM (SUREBET)"):
-        link_sorteado = random.choice(st.session_state.links_afiliados)
-        j_surebet = jogos_vitrine[4]
-        st.markdown(f"""
-        <div class='terminal-card'>
-            [SUREBET ENCONTRADA]<br>
-            ALVO: {j_surebet['jogo']}<br>
-            AÇÃO 1: {fmt_moeda(50)} -> {j_surebet['casa']} (Sua Casa @2.10)<br>
-            AÇÃO 2: {fmt_moeda(50)} -> Empate/{j_surebet['fora']} (<a href='{link_sorteado}' style='color:#00ff88;'>Casa VIP @2.15</a>)<br>
-            > STATUS: LUCRO 100% MATEMATICAMENTE GARANTIDO.
-        </div>
-        """, unsafe_allow_html=True)
-
     with st.expander("🤖 ORÁCULO A.I. (CHAT)"):
         pergunta = st.text_input("Comando de Análise:", placeholder="Digite o time ou jogo...")
         if st.button("PROCESSAR DADOS"):
@@ -384,19 +363,7 @@ with t2:
                     </div>
                     """, unsafe_allow_html=True)
 
-    with st.expander("✍️ OVERRIDE MANUAL"):
-        grade = st.text_area("Input de Jogos:", placeholder="Time A x Time B")
-        if st.button("FORÇAR ANÁLISE"):
-            if grade:
-                jogos = [j for j in grade.split('\n') if 'x' in j.lower()]
-                st.session_state.analisados = []
-                for j in jogos:
-                    c, f = j.lower().split('x')[0].strip().title(), j.lower().split('x')[1].strip().title()
-                    atk, dfs = calcular_forca_equipa(c)
-                    st.session_state.analisados.append({"jogo": j, "casa": c, "fora": f, "hora": "Auto", "m": random.choice(["Ambas Marcam", "Over 1.5", "Vitória"]), "o": round(random.uniform(1.4, 2.1), 2), "conf": random.randint(88,99), "atk": atk, "def": dfs, "arb": "Rigoroso"})
-                st.success("Matriz atualizada!")
-
-    st.markdown("<h4 class='neon-text' style='margin-top:20px;'>VARREDURA DO MERCADO</h4>", unsafe_allow_html=True)
+    st.markdown("<br><p style='color:#888; font-size: 12px;'>VARREDURA DO MERCADO</p>", unsafe_allow_html=True)
     codigo_da_liga = LIGAS_DISPONIVEIS[st.selectbox("Selecionar Filtro Global:", list(LIGAS_DISPONIVEIS.keys()))]
     
     if st.button("EXECUTAR SCANNER"):
@@ -423,90 +390,63 @@ with t2:
                         <div style='font-size:14px; font-weight:900;'>{item['casa']} <span style='color:#555; font-size:10px;'>VS</span> {item['fora']}</div>
                         <div style='color:{cor_neon}; font-weight:900; font-size:16px;'>@{item['o']}</div>
                     </div>
-                    
-                    <div style='margin-top:15px; font-size:10px; color:#888;'>PRESSÃO OFENSIVA ({item['atk']}%)</div>
-                    <div class='progress-bg'><div class='progress-fill-atk' style='width:{item['atk']}%;'></div></div>
-                    
-                    <div style='margin-top:5px; font-size:10px; color:#888;'>MURALHA DEFENSIVA ({item['def']}%)</div>
-                    <div class='progress-bg'><div class='progress-fill-def' style='width:{item['def']}%;'></div></div>
-                    
                     <div style='margin-top:15px; background:rgba(0,0,0,0.4); padding:10px; border-radius:8px;'>
                         <span style='font-size:11px; color:#aaa;'>ALGORITMO V8:</span> <b style='color:white;'>{item['m']}</b><br>
-                        <span style='font-size:11px; color:#aaa;'>CONFIANÇA:</span> <b style='color:{cor_neon};'>{item['conf']}%</b><br>
-                        <span style='font-size:11px; color:#aaa;'>ÁRBITRO:</span> <b style='color:#ccc;'>{item['arb']}</b>
+                        <span style='font-size:11px; color:#aaa;'>CONFIANÇA:</span> <b style='color:{cor_neon};'>{item['conf']}%</b>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
-            if st.button("➕ ADICIONAR OPERAÇÃO", key=f"btn_{idx}"):
-                st.session_state.bilhete.append(item)
-                st.toast("✅ Operação alocada!")
+            
+            # --- OS DOIS BOTÕES: BILHETE OU TRACKING INDIVIDUAL ---
+            col_add1, col_add2 = st.columns(2)
+            with col_add1:
+                if st.button("➕ BILHETE", key=f"btn_m_{idx}"):
+                    st.session_state.bilhete.append(item)
+                    st.toast("✅ Adicionado à Múltipla!")
+            with col_add2:
+                if st.button("💾 SALVAR DICA", key=f"btn_s_{idx}"):
+                    st.session_state.analises_salvas.append(item)
+                    st.toast("💾 Salvo no Tracking Pessoal!")
 
 # ==========================================
-# ABA 3: BILHETE E SMART STAKE
+# ABA 3: OPERAÇÕES (BILHETE + TRACKING)
 # ==========================================
 with t3:
-    st.markdown("<h4 class='neon-text'>PAINEL DE OPERAÇÕES</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 class='neon-text'>CARRINHO MÚLTIPLO</h4>", unsafe_allow_html=True)
     if st.session_state.bilhete:
         odd_f = 1.0
-        msg_tg = f"💎 *V8 SUPREME PRO* 💎\n\n"
         
+        st.markdown("<div class='glass-card' style='padding: 15px;'>", unsafe_allow_html=True)
         for b in st.session_state.bilhete:
             odd_f *= b['o']
-            st.markdown(f"""
-            <div class='glass-card' style='padding: 10px 15px; margin-bottom: 8px;'>
-                <div style='font-size:13px; font-weight:bold; color:white;'>{b['jogo']}</div>
-                <div style='display:flex; justify-content:space-between; margin-top:5px;'>
-                    <span style='color:#888; font-size:11px;'>Call: <b style='color:white;'>{b['m']}</b></span>
-                    <span style='color:{cor_neon}; font-weight:bold; font-size:12px;'>@{b['o']}</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            msg_tg += f"🎯 {b['jogo']}\n> {b['m']} (@{b['o']})\n\n"
-            
-        st.markdown(f"<h2 style='text-align:center; font-weight:900; font-size:36px; color:white; text-shadow: 0 0 20px {cor_neon}60;'>ODD <span style='color:{cor_neon};'>@{odd_f:.2f}</span></h2>", unsafe_allow_html=True)
+            st.markdown(f"<p style='margin:0; font-size:14px; border-bottom: 1px solid rgba(255,255,255,0.1); padding: 5px 0;'>✅ <b>{b['jogo']}</b> <span style='float:right; color:{cor_neon}; font-weight:bold;'>@{b['o']}</span></p>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
         
-        banca_escolhida = st.selectbox("Conta Origem:", list(st.session_state.bancas.keys()))
+        st.markdown(f"<h2 style='text-align:center; font-weight:900; font-size:36px; color:white;'>ODD <span style='color:{cor_neon};'>@{odd_f:.2f}</span></h2>", unsafe_allow_html=True)
+        
+        banca_escolhida = st.selectbox("Conta Origem:", list(st.session_state.bancas.keys()), key="banca_mult")
         banca_disp = st.session_state.bancas[banca_escolhida]
         
-        if st.session_state.recuperacao_red: rec_stake = banca_disp * 0.005; risco = "🛡️ MODO DEFESA"
-        else:
-            if odd_f < 2.5: rec_stake = banca_disp * 0.03; risco = "🟢 BAIXO"
-            elif odd_f < 6.0: rec_stake = banca_disp * 0.015; risco = "🟡 MODERADO"
-            else: rec_stake = banca_disp * 0.005; risco = "🔴 ALTO"
+        if st.session_state.recuperacao_red: rec_stake = banca_disp * 0.005; risco = "🛡️ DEFESA"
+        else: rec_stake = banca_disp * (0.03 if odd_f < 2.5 else 0.01)
 
         st.markdown(f"""
         <div class='terminal-card' style='margin-bottom:20px;'>
-            [SMART STAKE CALCULATOR]<br>
-            > SALDO DISPONÍVEL: {fmt_moeda(banca_disp)}<br>
-            > VOLATILIDADE: {risco}<br>
-            > GESTÃO IDEAL: <span style='color:{cor_neon}; font-size:16px;'>{fmt_moeda(rec_stake)}</span><br>
-            > CASHOUT SUGERIDO: Fechar aos 75' mins.
+            > SALDO: {fmt_moeda(banca_disp)}<br>
+            > GESTÃO IDEAL: <span style='color:{cor_neon}; font-size:16px;'>{fmt_moeda(rec_stake)}</span>
         </div>
         """, unsafe_allow_html=True)
         
-        valor_aposta = st.number_input("Valor de Entrada:", min_value=1.0, value=float(max(1.0, rec_stake)), step=5.0)
-        st.markdown(f"<div style='text-align:center; color:#888; font-size:12px; margin-bottom:15px;'>Retorno Estimado: <b style='color:white; font-size:16px;'>{fmt_moeda(valor_aposta * odd_f)}</b></div>", unsafe_allow_html=True)
+        valor_aposta = st.number_input("Entrada (Múltipla):", min_value=1.0, value=float(max(1.0, rec_stake)), step=5.0)
+        st.info(f"🤑 RETORNO ESPERADO: {fmt_moeda(valor_aposta * odd_f)}")
         
-        msg_whats = msg_tg + f"📊 *Odd Final:* @{odd_f:.2f}\n💰 *Gestão:* {fmt_moeda(valor_aposta)}\n\n🔗 [CLIQUE PARA APOSTAR]({st.session_state.link_afiliado_ativo})"
-        
-        if st.button("🚀 AUTO-BET (INJETAR NA CONTA)"):
-            with st.spinner("Autenticando broker e alocando fundos..."):
-                time.sleep(1.5)
-                st.session_state.bancas[banca_escolhida] -= valor_aposta
-                st.success("✅ Ordem executada com sucesso!")
-                tocar_som_customizado()
+        if odd_f > 10: st.session_state.titulo_apostador = "[O Kamikaze]"
+        elif odd_f < 2: st.session_state.titulo_apostador = "[O Seguro]"
+        else: st.session_state.titulo_apostador = "[O Estrategista]"
 
-        st.markdown("<br>", unsafe_allow_html=True)
-        col_b1, col_b2 = st.columns(2)
-        with col_b1:
-            st.markdown(f'<a href="https://api.whatsapp.com/send?text={urllib.parse.quote(msg_whats)}" target="_blank" style="display: block; background: rgba(255,255,255,0.1); border: 1px solid #fff; padding: 12px; text-align: center; border-radius: 8px; font-weight: bold; text-decoration: none; color: white;">🔗 WHATSAPP</a>', unsafe_allow_html=True)
-        with col_b2:
-            if st.button("🗑️ CANCELAR"): st.session_state.bilhete = []; st.rerun()
-
-        st.markdown("<hr style='border-color: rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
         col_r1, col_r2 = st.columns(2)
         with col_r1:
-            if st.button("✅ LIQUIDAR (GREEN)", use_container_width=True):
+            if st.button("✅ GREEN (MÚLTIPLA)", use_container_width=True):
                 if st.session_state.animacao_vitoria == "Balões": st.balloons()
                 else: st.snow()
                 tocar_som_customizado()
@@ -514,18 +454,56 @@ with t3:
                 st.session_state.total_acertos += len(st.session_state.bilhete)
                 st.session_state.bancas[banca_escolhida] += (valor_aposta * odd_f)
                 st.session_state.historico_banca.append(sum(st.session_state.bancas.values()))
-                st.session_state.recuperacao_red = False
-                if "🎯 Sniper" not in st.session_state.conquistas and st.session_state.total_acertos % 5 == 0: st.session_state.conquistas.append("🎯 Sniper")
                 st.session_state.bilhete = [] 
                 time.sleep(2); st.rerun()
         with col_r2:
-            if st.button("🔴 MARCAR RED", use_container_width=True):
+            if st.button("❌ RED / CANCELAR", use_container_width=True):
                 st.session_state.total_jogos += len(st.session_state.bilhete)
+                st.session_state.bancas[banca_escolhida] -= valor_aposta
                 st.session_state.historico_banca.append(sum(st.session_state.bancas.values()))
                 st.session_state.bilhete = [] 
                 st.rerun()
     else:
-        st.info("Nenhuma operação em staging. Inicie uma varredura.")
+        st.info("Múltipla vazia.")
+
+    # --- NOVO: TRACKING DE SINGLES (OPERAÇÕES INDIVIDUAIS SALVAS) ---
+    st.markdown("<h4 class='neon-text' style='margin-top: 40px;'>📂 TRACKING DE ANÁLISES (SINGLES)</h4>", unsafe_allow_html=True)
+    if st.session_state.analises_salvas:
+        for i, a in enumerate(st.session_state.analises_salvas):
+            st.markdown(f"""
+            <div class='glass-card' style='padding: 10px 15px; margin-bottom: 5px; border-left: 3px solid #00e5ff;'>
+                <div style='font-size:13px; font-weight:bold; color:white;'>{a['jogo']}</div>
+                <div style='display:flex; justify-content:space-between; margin-top:2px;'>
+                    <span style='color:#888; font-size:11px;'>Call: <b style='color:white;'>{a['m']}</b></span>
+                    <span style='color:{cor_neon}; font-weight:bold; font-size:12px;'>@{a['o']}</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            c_g, c_r, c_d = st.columns([0.4, 0.4, 0.2])
+            with c_g:
+                if st.button("✅ GREEN", key=f"tg_{i}"):
+                    st.session_state.total_jogos += 1
+                    st.session_state.total_acertos += 1
+                    st.session_state.historico_greens.insert(0, {"j": a['jogo'], "m": a['m'], "o": a['o']})
+                    st.session_state.analises_salvas.pop(i)
+                    if st.session_state.animacao_vitoria == "Balões": st.balloons()
+                    else: st.snow()
+                    tocar_som_customizado()
+                    time.sleep(1)
+                    st.rerun()
+            with c_r:
+                if st.button("❌ RED", key=f"tr_{i}"):
+                    st.session_state.total_jogos += 1
+                    st.session_state.analises_salvas.pop(i)
+                    st.rerun()
+            with c_d:
+                if st.button("🗑️", key=f"td_{i}"):
+                    st.session_state.analises_salvas.pop(i)
+                    st.rerun()
+            st.markdown("<hr style='border-color: rgba(255,255,255,0.05); margin: 10px 0;'>", unsafe_allow_html=True)
+    else:
+        st.caption("Nenhuma análise individual salva. Use o botão 'Salvar Dica' no Radar.")
 
 # ==========================================
 # ABA 4: SAFE
@@ -555,10 +533,6 @@ with t4:
 with t5:
     st.markdown(f"<h3 style='color:white; text-align:center; font-weight:900;'>V8 <span style='color:{cor_neon};'>HUB</span></h3>", unsafe_allow_html=True)
     
-    if st.button("👁️ MODO INVISÍVEL (BOSS BUTTON)"):
-        st.session_state.boss_mode = True
-        st.rerun()
-
     with st.expander("🏆 SUAS MEDALHAS"):
         st.markdown(" ".join([f"<span style='background:rgba(255,255,255,0.1); padding:5px 10px; border-radius:15px; font-size:12px; margin-right:5px; border:1px solid rgba(255,255,255,0.2);'>{c}</span>" for c in st.session_state.conquistas]), unsafe_allow_html=True)
 
@@ -576,6 +550,7 @@ with t5:
         col_a2.selectbox("Moeda:", ["R$", "US$", "€", "₿"], key="moeda")
         st.text_input("Foco Específico (Time):", placeholder="Ex: Flamengo", key="time_coracao")
         st.selectbox("Animação de Liquidar:", ["Balões", "Chuva de Neve"], key="animacao_vitoria")
+        st.selectbox("Som de Vitória:", ["Clássico (Caixa Registradora)", "Cassino Las Vegas", "Moeda Retro (8-bit)"], key="som_green")
 
     with st.expander("🧩 WIDGETS DO DASHBOARD"):
         st.session_state.mod_grafico = st.checkbox("Exibir Rendimento", value=st.session_state.mod_grafico)
@@ -599,7 +574,7 @@ with t5:
         if st.button("Atualizar DB de Links"): st.session_state.links_afiliados = [l.strip() for l in n_links.split('\n') if l.strip()]
         c_nome = st.text_input("Nova Key:")
         if st.button("FORJAR ACESSO"):
-            # Função placeholder, precisa ser integrada com a lógica real de keys
+            salvar_key(c_nome, 24)
             st.code(f"{LINK_PAINEL}?key={c_nome}")
         st.markdown("</div>", unsafe_allow_html=True)
 
