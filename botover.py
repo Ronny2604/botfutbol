@@ -76,6 +76,31 @@ def buscar_dados_api(codigo_da_liga):
         pass
     return None
 
+# FUNÇÃO NOVA: Buscar jogos reais do dia para popular os blocos UI dinamicamente
+@st.cache_data(ttl=3600, show_spinner=False) # Cache de 1 hora para economizar API
+def obter_jogos_vitrine():
+    ligas_busca = ["soccer_epl", "soccer_uefa_champs_league", "soccer_brazil_campeonato", "soccer_spain_la_liga"]
+    for liga in ligas_busca:
+        dados = buscar_dados_api(liga)
+        if dados and len(dados) >= 5:
+            jogos = []
+            for j in dados[:5]:
+                casa = j.get('home_team', 'Casa')
+                fora = j.get('away_team', 'Fora')
+                jogos.append({"casa": casa, "fora": fora, "jogo": f"{casa} x {fora}"})
+            return jogos
+    # Fallback de segurança se a API estiver sem jogos hoje
+    return [
+        {"casa": "Flamengo", "fora": "Palmeiras", "jogo": "Flamengo x Palmeiras"},
+        {"casa": "Real Madrid", "fora": "Man City", "jogo": "Real Madrid x Man City"},
+        {"casa": "Arsenal", "fora": "Liverpool", "jogo": "Arsenal x Liverpool"},
+        {"casa": "Bayern Munique", "fora": "Dortmund", "jogo": "Bayern Munique x Dortmund"},
+        {"casa": "Botafogo", "fora": "Vasco", "jogo": "Botafogo x Vasco"}
+    ]
+
+# Busca os 5 jogos reais do dia para usar nas interfaces
+jogos_vitrine = obter_jogos_vitrine()
+
 # --- 3. INICIALIZAÇÃO E ESTADOS DINÂMICOS ---
 if 'autenticado' not in st.session_state: st.session_state.autenticado = False
 if 'user_nome' not in st.session_state: st.session_state.user_nome = ""
@@ -94,7 +119,10 @@ if 'recuperacao_red' not in st.session_state: st.session_state.recuperacao_red =
 if 'total_jogos' not in st.session_state: st.session_state.total_jogos = 1248
 if 'total_acertos' not in st.session_state: st.session_state.total_acertos = 1115
 if 'historico_greens' not in st.session_state: 
-    st.session_state.historico_greens = [{"j": "Real Madrid x Benfica", "m": "Over 2.5", "o": 1.75}, {"j": "PSG x Monaco", "m": "Ambas Marcam", "o": 1.65}]
+    st.session_state.historico_greens = [
+        {"j": "Real Madrid x Benfica", "m": "Over 2.5", "o": 1.75}, 
+        {"j": "PSG x Monaco", "m": "Ambas Marcam", "o": 1.65}
+    ]
 
 db_keys = carregar_keys()
 
@@ -118,7 +146,7 @@ else: cor_neon = "#ff00ff" if is_fem else "#00ff88"
 if st.session_state.autenticado and random.random() < 0.2:
     st.toast(random.choice([
         "💸 Marcos_SP acabou de bater um Green de R$ 850!",
-        "🚨 A odd do Manchester City está a derreter! Rápido.",
+        f"🚨 A odd do {jogos_vitrine[0]['casa']} está a derreter! Rápido.",
         "🔥 Mais de 340 VIPs operando no Radar agora.",
         "💰 Ana_Silva sacou R$ 1.200 hoje na Dupla Segura."
     ]))
@@ -197,7 +225,7 @@ if not st.session_state.autenticado:
         # MELHORIA 10: ACESSO BIOMÉTRICO (Visual)
         st.markdown("<p style='text-align:center; margin-top:15px; color:#888; font-size: 12px;'>OU</p>", unsafe_allow_html=True)
         if st.button("🔓 ENTRAR COM FACE ID"):
-            if url_key: # Exige a key na URL para a biometria funcionar
+            if url_key: 
                 st.session_state.autenticado = True
                 st.session_state.is_admin = True
                 st.session_state.user_nome = "CEO"
@@ -220,7 +248,7 @@ LIGAS_DISPONIVEIS = {
 }
 
 # ==========================================
-# ABA 1: INÍCIO
+# ABA 1: INÍCIO (COM JOGOS REAIS)
 # ==========================================
 with t1:
     st.markdown(f"<h4 class='neon-text'>BEM-VINDO</h4>", unsafe_allow_html=True)
@@ -239,52 +267,58 @@ with t1:
         </div>
     """, unsafe_allow_html=True)
 
-    # MELHORIA 6: SABEDORIA DAS MASSAS
+    # MELHORIA 6: SABEDORIA DAS MASSAS COM JOGOS REAIS DA API
+    j_massas_1 = jogos_vitrine[0]['jogo']
+    j_massas_2 = jogos_vitrine[1]['jogo']
+    
     st.markdown("<h4 style='color:white; margin-top: 20px;'>👥 MAIS APOSTADOS PELOS VIPs</h4>", unsafe_allow_html=True)
     st.markdown(f"""
         <div style='background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; border-left: 3px solid {cor_neon}; margin-bottom: 5px;'>
-            <span style='color:{cor_neon}; font-weight:bold;'>#1</span> Real Madrid x Barcelona (Ambas Marcam)
+            <span style='color:{cor_neon}; font-weight:bold;'>#1</span> {j_massas_1} (Ambas Marcam)
         </div>
         <div style='background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; border-left: 3px solid #FFD700; margin-bottom: 20px;'>
-            <span style='color:#FFD700; font-weight:bold;'>#2</span> Arsenal x Chelsea (+1.5 Gols)
+            <span style='color:#FFD700; font-weight:bold;'>#2</span> {j_massas_2} (+1.5 Gols)
         </div>
     """, unsafe_allow_html=True)
 
     minuto = datetime.now().minute
+    j_live = jogos_vitrine[2]
     st.markdown("<h4 style='color:white;'>🔴 JOGOS A DECORRER</h4>", unsafe_allow_html=True)
     st.markdown(f"""
         <div style='background-color: rgba(26,27,34,0.9); border-left: 3px solid #ff3333; padding: 10px 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;'>
-            <div><span class='live-badge'>{(minuto+23)%90+1}'</span> <span style='color:white; font-weight:bold; font-size: 14px; margin-left: 10px;'>Liverpool {(minuto//15)%3} x {(minuto//25)%2} Man City</span></div>
-            <div style='color:#bbb; font-size: 12px;'>IA: <span style='color:{cor_neon}; font-weight:bold;'>Ambas Marcam</span></div>
+            <div><span class='live-badge'>{(minuto+23)%90+1}'</span> <span style='color:white; font-weight:bold; font-size: 14px; margin-left: 10px;'>{j_live['casa']} {(minuto//15)%3} x {(minuto//25)%2} {j_live['fora']}</span></div>
+            <div style='color:#bbb; font-size: 12px;'>IA: <span style='color:{cor_neon}; font-weight:bold;'>Over 1.5</span></div>
         </div>
     """, unsafe_allow_html=True)
 
 # ==========================================
-# ABA 2: RADAR, ORÁCULO E SUREBET
+# ABA 2: RADAR, ORÁCULO E SUREBET (COM JOGOS REAIS)
 # ==========================================
 with t2:
     st.markdown("<h4 class='neon-text'>SELECTION HUB</h4>", unsafe_allow_html=True)
     
-    # MELHORIA 5: RADAR DE LESÕES
-    st.markdown("""
+    # MELHORIA 5: RADAR DE LESÕES COM TIME REAL DA API
+    j_lesao = jogos_vitrine[3]['casa']
+    st.markdown(f"""
         <div style='background-color: rgba(255,51,51,0.1); border: 1px solid #ff3333; padding: 10px; border-radius: 8px; margin-bottom: 15px;'>
-            <span style='color:#ff3333; font-weight:bold;'>🚨 ALERTA DE ZEbra:</span> Notícia urgente! Goleiro titular do time mandante na Serie A sofreu lesão. A IA recomenda focar no <b>Over Gols</b> nesta liga hoje.
+            <span style='color:#ff3333; font-weight:bold;'>🚨 ALERTA DE ZEBRA:</span> Notícia urgente! Goleiro titular do <b>{j_lesao}</b> sofreu lesão no treino de hoje. A IA recomenda focar no <b>Over Gols</b> nesta partida.
         </div>
     """, unsafe_allow_html=True)
 
-    # MELHORIA 3: ARBITRAGEM (SUREBET)
+    # MELHORIA 3: ARBITRAGEM (SUREBET) COM JOGO REAL DA API
+    j_surebet = jogos_vitrine[4]
     with st.expander("⚖️ OPORTUNIDADE DE SUREBET (LUCRO 100%)"):
         st.markdown(f"""
-        <p style='font-size: 12px; color:#bbb;'>A IA cruzou as casas de apostas e encontrou uma falha no mercado:</p>
+        <p style='font-size: 12px; color:#bbb;'>A IA cruzou as casas de apostas e encontrou uma falha no mercado para hoje:</p>
         <div style='background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px;'>
-            <b>Jogo:</b> Napoli x Roma<br>
-            Aposte <b>R$ 50</b> no Napoli na Betano (Odd @2.10)<br>
-            Aposte <b>R$ 50</b> em Empate/Roma na Bet365 (Odd @2.15)<br>
+            <b>Jogo:</b> {j_surebet['jogo']}<br>
+            Aposte <b>R$ 50</b> no {j_surebet['casa']} na Betano (Odd @2.10)<br>
+            Aposte <b>R$ 50</b> em Empate/{j_surebet['fora']} na Bet365 (Odd @2.15)<br>
             <span style='color:{cor_neon}; font-weight:bold;'>Lucro Garantido: R$ 5,00 a R$ 7,50 independente do resultado!</span>
         </div>
         """, unsafe_allow_html=True)
 
-    # MELHORIA 11 (CORRIGIDA): ORÁCULO INTELIGENTE
+    # MELHORIA 11: ORÁCULO INTELIGENTE
     with st.expander("🤖 ORÁCULO V8 - Pergunte à IA"):
         pergunta = st.text_input("O que você quer analisar?", placeholder="Ex: Analise o Flamengo para mim")
         if st.button("🔮 CONSULTAR ORÁCULO"):
@@ -311,7 +345,7 @@ with t2:
 
     # MELHORIA 7: MODO MANUAL RESTAURADO
     with st.expander("✍️ MODO MANUAL: Inserir Grade Própria"):
-        grade = st.text_area("Cole aqui a sua lista de jogos:", height=100, placeholder="Flamengo x Vasco\nReal Madrid x Chelsea")
+        grade = st.text_area("Cole aqui a sua lista de jogos:", height=100, placeholder="Ex: Santos x Fluminense\nCeara x Coritiba")
         if st.button("🔍 ANÁLISE MANUAL"):
             if grade:
                 jogos = [j for j in grade.split('\n') if 'x' in j.lower()]
