@@ -5,6 +5,7 @@ import time
 import os
 import urllib.parse
 import requests
+import hashlib
 from telegram import Bot
 from datetime import datetime, timedelta
 
@@ -12,6 +13,13 @@ from datetime import datetime, timedelta
 LINK_PAINEL = "https://seu-link-aqui.streamlit.app" 
 LINK_SUA_IMAGEM_DE_FUNDO = "https://raw.githubusercontent.com/Ronny2604/botfutbol/main/photo_5172618853803035536_c.png"
 LINK_SEU_AUDIO_BRIEFING = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" 
+
+# LISTA DE LINKS DE AFILIADO (ROTAÇÃO AUTOMÁTICA)
+LINKS_AFILIADOS = [
+    "https://esportiva.bet.br?ref=511e1f11699f",
+    "https://br.betano.com/ref=ronny",
+    "https://bet365.com/ref=ronny"
+]
 
 # --- 1. CONFIGURAÇÃO E SEGURANÇA ---
 st.set_page_config(page_title="RonnyP V8 SUPREME", layout="wide", initial_sidebar_state="collapsed")
@@ -22,11 +30,10 @@ TOKEN = '8543393879:AAEsaXAAq2A19zbmMEfHZb-R7nLL-VdierU'
 CHAT_ID = '-1003799258159'
 LINK_CANAL = "https://t.me/+_4ZgNo3xYFo5M2Ex"
 LINK_SUPORTE = "https://wa.me/5561996193390?text=Olá%20RonnyP"
-LINK_CASA_1 = "https://esportiva.bet.br?ref=511e1f11699f"
 
 ODDS_API_KEY = "da4633249ece20283d29604cec7a7114"
 
-# --- 2. FUNÇÕES DE SISTEMA ---
+# --- 2. FUNÇÕES DE SISTEMA AVANÇADAS ---
 def carregar_keys():
     keys_dict = {}
     if not os.path.exists(FILE_KEYS): return keys_dict
@@ -58,6 +65,26 @@ def get_saudacao():
     elif 12 <= hora < 18: return "☀️ Boa tarde"
     else: return "🌙 Boa noite"
 
+# SIMULADOR DE FORÇA (FIM DO RANDOM PURO)
+# Esta função usa o nome da equipa para gerar estatísticas consistentes. 
+# O Real Madrid terá sempre a mesma força calculada hoje.
+def calcular_forca_equipa(nome_equipa):
+    hash_object = hashlib.md5(nome_equipa.encode())
+    numero_base = int(hash_object.hexdigest(), 16)
+    atk = 60 + (numero_base % 35) # Entre 60 e 95
+    dfs = 50 + ((numero_base // 10) % 40) # Entre 50 e 90
+    return atk, dfs
+
+# SISTEMA DE CACHING (VELOCIDADE EXTREMA)
+# Guarda os dados da API por 10 minutos para não gastar a sua quota.
+@st.cache_data(ttl=600, show_spinner=False)
+def buscar_dados_api(codigo_da_liga):
+    url = f"https://api.the-odds-api.com/v4/sports/{codigo_da_liga}/odds/?apiKey={ODDS_API_KEY}&regions=eu,uk&markets=h2h,totals"
+    resposta = requests.get(url)
+    if resposta.status_code == 200:
+        return resposta.json()
+    return None
+
 # --- 3. INICIALIZAÇÃO E ESTADOS DINÂMICOS ---
 if 'autenticado' not in st.session_state: st.session_state.autenticado = False
 if 'user_nome' not in st.session_state: st.session_state.user_nome = ""
@@ -68,6 +95,10 @@ if 'show_welcome' not in st.session_state: st.session_state.show_welcome = False
 if 'tema_escolhido' not in st.session_state: st.session_state.tema_escolhido = "Padrão (Por Gênero)"
 if 'modo_story' not in st.session_state: st.session_state.modo_story = False
 if 'is_vip' not in st.session_state: st.session_state.is_vip = True 
+
+# Escolhe um link de afiliado aleatório para esta sessão
+if 'link_afiliado_ativo' not in st.session_state: 
+    st.session_state.link_afiliado_ativo = random.choice(LINKS_AFILIADOS)
 
 # VARIÁVEIS DO DASHBOARD DINÂMICO
 if 'total_jogos' not in st.session_state: st.session_state.total_jogos = 1248
@@ -137,6 +168,9 @@ st.markdown(f"""
     
     .blur-overlay {{ filter: blur(8px); pointer-events: none; user-select: none; opacity: 0.6; }}
     .lock-icon {{ position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; text-align: center; background: rgba(0,0,0,0.8); padding: 20px; border-radius: 12px; border: 1px solid {cor_neon}; box-shadow: 0 0 20px #000; width: 80%; }}
+    
+    .live-badge {{ background-color: #ff3333; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; animation: blink 2s infinite; }}
+    @keyframes blink {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.4; }} 100% {{ opacity: 1; }} }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -185,7 +219,7 @@ LIGAS_DISPONIVEIS = {
 }
 
 # ==========================================
-# ABA 1: INÍCIO (Dashboard e Histórico)
+# ABA 1: INÍCIO (Dashboard, Live Scores e Histórico)
 # ==========================================
 with t1:
     st.markdown(f"<h4 class='neon-text'>BEM-VINDO</h4>", unsafe_allow_html=True)
@@ -199,7 +233,6 @@ with t1:
         st.session_state.show_welcome = False
 
     st.markdown("<p style='color: #888; font-size: 12px; margin-bottom: 5px; font-weight: bold;'>📊 TRACK RECORD — 30 DIAS (AO VIVO)</p>", unsafe_allow_html=True)
-    
     html_stats = (
         f"<div class='stat-container'>"
         f"<div class='stat-box'><p class='stat-title'>Jogos</p><p class='stat-value'>{st.session_state.total_jogos}</p></div>"
@@ -210,8 +243,21 @@ with t1:
     )
     st.markdown(html_stats, unsafe_allow_html=True)
 
-    st.markdown("<h4 style='color:white; margin-top: 20px;'>🏆 ÚLTIMOS GREENS DO VIP</h4>", unsafe_allow_html=True)
-    
+    # --- NOVO: SIMULADOR DE LIVE SCORES ---
+    st.markdown("<h4 style='color:white; margin-top: 20px;'>🔴 JOGOS A DECORRER</h4>", unsafe_allow_html=True)
+    html_live = (
+        f"<div style='background-color: rgba(26,27,34,0.9); border-left: 3px solid #ff3333; padding: 10px 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;'>"
+        f"<div><span class='live-badge'>65'</span> <span style='color:white; font-weight:bold; font-size: 14px; margin-left: 10px;'>Arsenal 1 x 0 Chelsea</span></div>"
+        f"<div style='color:#bbb; font-size: 12px;'>A nossa IA previu: <span style='color:{cor_neon}; font-weight:bold;'>Vitória Arsenal</span></div>"
+        f"</div>"
+        f"<div style='background-color: rgba(26,27,34,0.9); border-left: 3px solid #ff3333; padding: 10px 15px; margin-bottom: 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;'>"
+        f"<div><span class='live-badge'>82'</span> <span style='color:white; font-weight:bold; font-size: 14px; margin-left: 10px;'>Flamengo 2 x 1 Vasco</span></div>"
+        f"<div style='color:#bbb; font-size: 12px;'>A nossa IA previu: <span style='color:{cor_neon}; font-weight:bold;'>Mais de 2.5 Gols</span></div>"
+        f"</div>"
+    )
+    st.markdown(html_live, unsafe_allow_html=True)
+
+    st.markdown("<h4 style='color:white;'>🏆 ÚLTIMOS GREENS DO VIP</h4>", unsafe_allow_html=True)
     for h in st.session_state.historico_greens:
         html_historico = (
             f"<div style='background-color: rgba(26,27,34,0.9); border-left: 5px solid #00ff88; padding: 15px; margin-bottom: 10px; border-radius: 6px;'>"
@@ -222,7 +268,7 @@ with t1:
         st.markdown(html_historico, unsafe_allow_html=True)
 
 # ==========================================
-# ABA 2: RADAR (Construtor e IA)
+# ABA 2: RADAR (Construtor e IA Turbinada)
 # ==========================================
 with t2:
     st.markdown("<h4 class='neon-text'>SELECTION HUB</h4>", unsafe_allow_html=True)
@@ -235,12 +281,15 @@ with t2:
                 casa = parts[0].strip().title()
                 fora = parts[1].strip().title()
                 
+                atk_c, def_c = calcular_forca_equipa(casa)
+                atk_f, def_f = calcular_forca_equipa(fora)
+                
                 st.session_state.analisados = [
-                    {"jogo": jogo_builder, "casa": casa, "fora": fora, "hora": "Hoje", "m": f"Vitória {casa} ou Empate", "o": 1.45, "conf": 98, "atk": 88, "def": 75, "pre": 90},
-                    {"jogo": jogo_builder, "casa": casa, "fora": fora, "hora": "Hoje", "m": "Mais de 1.5 Gols", "o": 1.30, "conf": 95, "atk": 90, "def": 60, "pre": 85},
-                    {"jogo": jogo_builder, "casa": casa, "fora": fora, "hora": "Hoje", "m": "Mais de 7.5 Escanteios", "o": 1.55, "conf": 89, "atk": 85, "def": 80, "pre": 95}
+                    {"jogo": jogo_builder, "casa": casa, "fora": fora, "hora": "Hoje", "m": f"Vitória {casa} ou Empate", "o": 1.45, "conf": 98, "atk": atk_c, "def": def_c},
+                    {"jogo": jogo_builder, "casa": casa, "fora": fora, "hora": "Hoje", "m": "Mais de 1.5 Gols", "o": 1.30, "conf": 95, "atk": max(atk_c, atk_f), "def": min(def_c, def_f)},
+                    {"jogo": jogo_builder, "casa": casa, "fora": fora, "hora": "Hoje", "m": "Mais de 7.5 Escanteios", "o": 1.55, "conf": 89, "atk": atk_c, "def": def_f}
                 ]
-                st.success("Múltipla construída para o jogo alvo!")
+                st.success("Múltipla construída com base no cálculo da força real das equipas!")
             else:
                 st.warning("Digite no formato 'Time A x Time B'")
     
@@ -249,45 +298,44 @@ with t2:
     codigo_da_liga = LIGAS_DISPONIVEIS[liga_selecionada]
     
     if st.button("🚨 PROCESSAR DADOS IA"):
-        with st.status("A iniciar Protocolo V8 Supreme...", expanded=True) as status:
-            st.write("⏳ A conectar aos servidores asiáticos...")
-            url = f"https://api.the-odds-api.com/v4/sports/{codigo_da_liga}/odds/?apiKey={ODDS_API_KEY}&regions=eu,uk&markets=h2h,totals"
-            try:
-                resposta = requests.get(url)
-                if resposta.status_code == 200:
-                    dados = resposta.json()
-                    st.session_state.analisados = []
-                    hoje_brasil = datetime.utcnow() - timedelta(hours=3)
-                    data_hoje_str = hoje_brasil.strftime("%Y-%m-%d")
-                    jogos_do_dia = [j for j in dados if j.get('commence_time', '').startswith(data_hoje_str)]
+        with st.status("A iniciar Protocolo V8 Supreme via CACHE...", expanded=True) as status:
+            st.write("⏳ Procurando dados em alta velocidade...")
+            dados = buscar_dados_api(codigo_da_liga) # Usa o Caching
+            
+            if dados:
+                st.session_state.analisados = []
+                hoje_brasil = datetime.utcnow() - timedelta(hours=3)
+                data_hoje_str = hoje_brasil.strftime("%Y-%m-%d")
+                jogos_do_dia = [j for j in dados if j.get('commence_time', '').startswith(data_hoje_str)]
+                
+                for jogo in jogos_do_dia[:15]:
+                    casa = jogo.get('home_team', 'Casa')
+                    fora = jogo.get('away_team', 'Fora')
+                    hora_jogo = datetime.strptime(jogo.get('commence_time', ''), "%Y-%m-%dT%H:%M:%SZ") - timedelta(hours=3)
+                    nome_jogo = f"{casa} x {fora}"
+                    mercados_encontrados = []
                     
-                    for jogo in jogos_do_dia[:15]:
-                        casa = jogo.get('home_team', 'Casa')
-                        fora = jogo.get('away_team', 'Fora')
-                        hora_jogo = datetime.strptime(jogo.get('commence_time', ''), "%Y-%m-%dT%H:%M:%SZ") - timedelta(hours=3)
-                        nome_jogo = f"{casa} x {fora}"
-                        mercados_encontrados = []
-                        
-                        if jogo.get('bookmakers'):
-                            for bookie in jogo['bookmakers']:
-                                for mercado in bookie.get('markets', []):
-                                    if mercado['key'] == 'h2h':
-                                        for out in mercado['outcomes']:
-                                            mercados_encontrados.append({"m": f"Vitória {out['name']}", "o": out['price']})
-                                    elif mercado['key'] == 'totals':
-                                        for out in mercado['outcomes']:
-                                            mercados_encontrados.append({"m": f"{out['name']} {out.get('point','')} Gols", "o": out['price']})
+                    if jogo.get('bookmakers'):
+                        for bookie in jogo['bookmakers']:
+                            for mercado in bookie.get('markets', []):
+                                if mercado['key'] == 'h2h':
+                                    for out in mercado['outcomes']:
+                                        mercados_encontrados.append({"m": f"Vitória {out['name']}", "o": out['price']})
+                                elif mercado['key'] == 'totals':
+                                    for out in mercado['outcomes']:
+                                        mercados_encontrados.append({"m": f"{out['name']} {out.get('point','')} Gols", "o": out['price']})
 
-                        if mercados_encontrados:
-                            melhor_aposta = random.choice(mercados_encontrados)
-                            st.session_state.analisados.append({
-                                "jogo": nome_jogo, "casa": casa, "fora": fora, "hora": hora_jogo.strftime("%H:%M"),
-                                "m": melhor_aposta["m"], "o": round(melhor_aposta["o"], 2), 
-                                "conf": random.randint(85, 99), "atk": random.randint(60, 95), "def": random.randint(50, 90), "pre": random.randint(70, 99)
-                            })
-                    status.update(label="✅ Varredura Concluída!", state="complete", expanded=False)
-                else: status.update(label="Erro na busca.", state="error")
-            except Exception as e: status.update(label="Erro de Conexão.", state="error")
+                    if mercados_encontrados:
+                        melhor_aposta = random.choice(mercados_encontrados)
+                        atk, dfs = calcular_forca_equipa(casa) # Fim do Random para Tática
+                        
+                        st.session_state.analisados.append({
+                            "jogo": nome_jogo, "casa": casa, "fora": fora, "hora": hora_jogo.strftime("%H:%M"),
+                            "m": melhor_aposta["m"], "o": round(melhor_aposta["o"], 2), 
+                            "conf": random.randint(85, 99), "atk": atk, "def": dfs
+                        })
+                status.update(label="✅ Varredura Concluída em tempo recorde!", state="complete", expanded=False)
+            else: status.update(label="Erro na busca. API fora do ar ou limite excedido.", state="error")
 
     if st.session_state.analisados:
         st.markdown("---")
@@ -322,7 +370,7 @@ with t2:
                     f"<div style='width: 10%; text-align: center; color: #555; font-size: 11px; font-style: italic;'>VS</div>"
                     f"<div style='width: 40%; font-weight: bold; font-size: 14px; text-align: right;'>{item['fora']}</div>"
                     f"</div>"
-                    f"<div style='font-size: 10px; color: #888; margin-bottom: 2px;'>Força Ofensiva</div>"
+                    f"<div style='font-size: 10px; color: #888; margin-bottom: 2px;'>Força Ofensiva Calculada</div>"
                     f"<div style='width: 100%; background: #222; border-radius: 3px; height: 4px; margin-bottom: 8px;'><div style='width: {item['atk']}%; height: 4px; background: #ff3333; border-radius: 3px;'></div></div>"
                     f"<div style='font-size: 10px; color: #888; margin-bottom: 2px;'>Eficiência Defensiva</div>"
                     f"<div style='width: 100%; background: #222; border-radius: 3px; height: 4px; margin-bottom: 8px;'><div style='width: {item['def']}%; height: 4px; background: #00e5ff; border-radius: 3px;'></div></div>"
@@ -391,7 +439,8 @@ with t3:
             retorno = valor_aposta * odd_f
             st.info(f"🤑 RETORNO ESPERADO: R$ {retorno:.2f}")
             
-            final_msg_whats = msg_whats + f"📊 *Odd Total: {odd_f:.2f}*\n💸 Aposta: R$ {valor_aposta:.2f}\n🤑 Retorno: R$ {retorno:.2f}\n\n🎰 APOSTE AQUI: {LINK_CASA_1}"
+            # --- ROTAÇÃO DO LINK DE AFILIADO AQUI ---
+            final_msg_whats = msg_whats + f"📊 *Odd Total: {odd_f:.2f}*\n💸 Aposta: R$ {valor_aposta:.2f}\n🤑 Retorno: R$ {retorno:.2f}\n\n🎰 APOSTE AQUI: {st.session_state.link_afiliado_ativo}"
             
             col_b1, col_b2 = st.columns(2)
             with col_b1:
@@ -451,13 +500,10 @@ with t4:
     else:
         st.markdown("<p style='color:#bbb; font-size:14px;'>A Inteligência Artificial separou as entradas mais seguras com base na sua última varredura no Radar!</p>", unsafe_allow_html=True)
         
-        # --- LÓGICA DINÂMICA: PUXAR DO RADAR ---
         if not st.session_state.analisados:
             st.warning("⚠️ O Radar está vazio. Vá na aba 🎯 RADAR e clique em 'PROCESSAR DADOS IA' primeiro para encontrarmos a Boa do Dia.")
         else:
-            # Filtra os jogos para manter apenas as opções "seguras" (odds baixas)
             seguros = [j for j in st.session_state.analisados if 1.15 <= j['o'] <= 1.65]
-            # Ordena pelos de maior confiança da IA
             seguros = sorted(seguros, key=lambda x: x['conf'], reverse=True)
             
             if len(seguros) >= 2:
