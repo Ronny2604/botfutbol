@@ -110,12 +110,12 @@ def valida_chave(chave):
                 except: continue
     return False, False
 
-# --- MOTOR DINÂMICO DE TEMAS (FORÇA BRUTA PARA MODO CLARO) ---
+# --- MOTOR DINÂMICO DE TEMAS ---
 tema = st.session_state.tema_escolhido
 is_light = (tema == "⚪ Modo Claro (Light)")
 
 if is_light:
-    cor_neon = "#0055ff" # Azul Tech
+    cor_neon = "#0055ff" 
     grad = "linear-gradient(135deg, rgba(0,85,255,0.1), rgba(0,0,0,0))"
     bg_app = f"linear-gradient(rgba(255,255,255,0.85), rgba(240,242,246,0.95)), url('{LINK_SUA_IMAGEM_DE_FUNDO}')"
     c_prim = "#111111"
@@ -151,18 +151,27 @@ else:
 if st.session_state.autenticado and random.random() < 0.2:
     st.toast(random.choice([f"💸 Marcos_SP sacou {fmt_moeda(850)} agora!", f"🚨 Odd do {jogos_vitrine[0]['casa']} derretendo!", "🔥 340 VIPs online operando.", "💰 Ana_Silva recuperou o Red no Cashout exato."]))
 
-# --- CSS SUPREMO ---
+# --- CSS SUPREMO BLINDADO ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700;900&display=swap');
     html, body, [class*="css"] {{ font-family: 'Inter', sans-serif !important; }}
     header[data-testid="stHeader"] {{ display: none !important; }}
+    
+    /* AQUI MORA A CORREÇÃO DAS PARTES PRETAS: FORÇAR O FUNDO 100VH */
+    html, body, [data-testid="stAppViewContainer"], .stApp, .main {{ 
+        background: {bg_app} !important; 
+        background-size: cover !important; 
+        background-position: center center !important; 
+        background-attachment: fixed !important; 
+        background-repeat: no-repeat !important;
+        min-height: 100vh !important; 
+        color: {c_prim} !important; 
+    }}
+    
     .block-container {{ padding-top: 0rem !important; margin-top: 0rem !important; padding-bottom: 80px !important; }}
     #MainMenu {{visibility: hidden !important;}} .stDeployButton {{display:none !important;}} footer {{visibility: hidden !important;}}
     
-    .stApp {{ background: {bg_app} !important; background-size: cover !important; background-position: center !important; background-attachment: fixed !important; color: {c_prim} !important; }}
-    
-    /* FORÇAR CORES NOS TEXTOS E INPUTS (MODO CLARO) */
     .stMarkdown p, .stText p, h1, h2, h3, h4, h5, h6, label {{ color: {c_prim} !important; }}
     div[data-baseweb="select"] > div, div[data-baseweb="input"] > div, textarea {{ background-color: {card_bg} !important; color: {c_prim} !important; border: 1px solid {card_border} !important; }}
     
@@ -180,16 +189,17 @@ st.markdown(f"""
     .fab:hover {{ transform: scale(1.1); }}
 
     div[data-testid="stTabs"] > div:first-of-type {{ background-color: {tab_bg} !important; backdrop-filter: blur(5px); border-radius: 50px !important; padding: 5px !important; margin-bottom: 20px !important; border: 1px solid {card_border} !important; }}
-    div[data-testid="stTabs"] button[role="tab"] {{ color: {c_sec} !important; font-weight: 700 !important; font-size: 11px !important; background: transparent !important; border: none !important; border-radius: 30px !important; padding: 10px 15px !important; }}
+    div[data-testid="stTabs"] button[role="tab"] {{ color: {c_sec} !important; font-weight: 700 !important; font-size: 11px !important; background: transparent !important; border: none !important; border-radius: 30px !important; padding: 10px 15px !important; transition: all 0.3s ease !important;}}
+    div[data-testid="stTabs"] button[role="tab"]:hover {{ color: {c_prim} !important; }}
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {{ color: {cor_neon} !important; background: {tab_active_bg} !important; border-bottom: 2px solid {cor_neon} !important; }}
     
-    .glass-card {{ background: {card_bg}; backdrop-filter: blur(10px); border: 1px solid {card_border}; border-radius: 12px; padding: 15px; margin-bottom: 15px; width: 100%; box-sizing: border-box; transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; }}
+    .glass-card {{ background: {card_bg}; backdrop-filter: blur(10px); border: 1px solid {card_border}; border-radius: 12px; padding: 15px; margin-bottom: 15px; width: 100%; box-sizing: border-box; transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; color: {c_prim}; }}
     .glass-card:hover {{ transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-color: {cor_neon}80; }}
     
     .terminal-card {{ background: {terminal_bg}; border: 1px solid {card_border}; border-left: 3px solid {cor_neon}; border-radius: 8px; padding: 15px; font-family: monospace; color: {cor_neon}; width: 100%; box-sizing: border-box; }}
     .neon-text {{ color: {cor_neon}; font-weight: 900; font-size: 14px; letter-spacing: 1px; text-transform: uppercase; text-shadow: 0 0 10px {cor_neon}40; }}
     
-    .stButton>button {{ background: {grad} !important; color: {c_prim} !important; font-weight: 900 !important; border-radius: 8px !important; border: 1px solid {cor_neon} !important; padding: 12px 20px !important; width: 100%; transition: all 0.2s ease !important; box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important; }}
+    .stButton>button {{ background: {grad} !important; color: {c_prim} !important; font-weight: 900 !important; border-radius: 8px !important; border: 1px solid {cor_neon} !important; padding: 12px 20px !important; width: 100%; transition: all 0.2s ease !important; }}
     .stButton>button:hover {{ background: {cor_neon} !important; color: {c_inv} !important; transform: translateY(-2px) !important; box-shadow: 0 8px 20px {cor_neon}60 !important; }}
     
     .progress-bg {{ width: 100%; background: {progress_bg}; border-radius: 10px; height: 6px; margin-bottom: 8px; overflow: visible; }}
@@ -199,6 +209,7 @@ st.markdown(f"""
     .live-badge {{ background-color: #ff3333; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; animation: pulsar 1.5s infinite; display: inline-block; }}
     @keyframes pulsar {{ 0% {{ box-shadow: 0 0 0 0 rgba(255,51,51,0.7); }} 70% {{ box-shadow: 0 0 0 6px rgba(255,51,51,0); }} 100% {{ box-shadow: 0 0 0 0 rgba(255,51,51,0); }} }}
     </style>
+    
     <div class="fab">🤖</div>
 """, unsafe_allow_html=True)
 
@@ -252,7 +263,8 @@ with st.sidebar:
     st.markdown(f"**Banca Ativa:** {fmt_moeda(saldo_total)}")
     st.markdown("---")
     st.markdown("🧠 **Foco Operacional**")
-    if st.button("⏱️ Iniciar Sessão 25m"): st.toast("Foco iniciado!")
+    if st.button("⏱️ Iniciar Sessão 25m"):
+        st.toast("Foco iniciado! Evite o over-betting.")
 
 # --- TOP BAR VIP ---
 st.markdown(f"""
@@ -361,14 +373,21 @@ with t2:
                     c, f = jogo.get('home_team', 'Casa'), jogo.get('away_team', 'Fora')
                     ap = {"m": f"Vitória {c}", "o": round(random.uniform(1.3, 2.5), 2)} 
                     atk, dfs = calcular_forca_equipa(c)
-                    st.session_state.analisados.append({"jogo": f"{c} x {f}", "casa": c, "fora": f, "m": ap["m"], "o": ap["o"], "conf": random.randint(85, 99), "atk": atk, "def": dfs, "xg_c": round(random.uniform(0.5, 3.0), 2), "xg_f": round(random.uniform(0.2, 1.8), 2), "weather": random.choice(["☀️ Claro", "🌧️ Chuva Leve", "❄️ Frio Intenso"]), "streak": random.randint(1, 5)})
+                    st.session_state.analisados.append({
+                        "jogo": f"{c} x {f}", "casa": c, "fora": f, 
+                        "m": ap["m"], "o": ap["o"], "conf": random.randint(85, 99), 
+                        "atk": atk, "def": dfs, 
+                        "xg_c": round(random.uniform(0.5, 3.0), 2), "xg_f": round(random.uniform(0.2, 1.8), 2), 
+                        "weather": random.choice(["☀️ Claro", "🌧️ Chuva Leve", "❄️ Frio Intenso"]), 
+                        "streak": random.randint(1, 5)
+                    })
                 st.toast("✅ Scanner concluído.")
             else: st.error("Erro na comunicação com a API.")
 
     if st.session_state.analisados:
         st.markdown(f"<hr style='border-color: {card_border};'>", unsafe_allow_html=True)
         for idx, item in enumerate(st.session_state.analisados):
-            # HTML em uma única linha blindada contra o bug do markdown
+            # CÓDIGO BLINDADO EM UMA LINHA PARA EVITAR BUG DO STREAMLIT
             html_card = f"<div class='glass-card'><div style='display:flex; justify-content:space-between; align-items:center;'><div style='font-size:14px; font-weight:900; color:{c_prim};'>{item['casa']} <span style='color:{c_sec}; font-size:10px;'>VS</span> {item['fora']}</div><div style='color:{cor_neon}; font-weight:900; font-size:16px;'>@{item['o']}</div></div><div style='font-size:10px; color:{c_sec}; margin-top:5px;'>🌡️ {item.get('weather', '☀️ Claro')} | 🔥 Streak: {item.get('streak', 1)}V</div><div style='margin-top:15px; font-size:10px; color:{c_sec};'>PRESSÃO OFENSIVA (xG: {item.get('xg_c', 1.5)})</div><div class='progress-bg'><div class='progress-fill-atk' style='width:{item['atk']}%;'></div></div><div style='margin-top:5px; font-size:10px; color:{c_sec};'>MURALHA DEFENSIVA (xG: {item.get('xg_f', 0.8)})</div><div class='progress-bg'><div class='progress-fill-def' style='width:{item['def']}%;'></div></div><div style='margin-top:15px; background:{c_bg_badge}; padding:10px; border-radius:8px;'><span style='font-size:11px; color:{c_sec};'>ALGORITMO V8:</span> <b style='color:{c_prim};'>{item['m']}</b><br><span style='font-size:11px; color:{c_sec};'>CONFIANÇA:</span> <b style='color:{cor_neon};'>{item['conf']}%</b></div></div>"
             st.markdown(html_card, unsafe_allow_html=True)
             
@@ -453,12 +472,41 @@ with t3:
         st.caption("Nenhuma análise salva.")
 
 # ==========================================
-# ABA 4: SAFE E ABA 5: PERFIL
+# ABA 4: SAFE (BINGO DO DIA)
 # ==========================================
 with t4:
-    st.markdown("<h4 class='neon-text'>HIGH EV ZONE</h4>", unsafe_allow_html=True)
-    st.info("Varredura prévia requerida no Radar.")
+    st.markdown("<h4 class='neon-text'>HIGH EV ZONE (SAFE)</h4>", unsafe_allow_html=True)
+    
+    if not st.session_state.is_vip:
+        # TELA BORRADA PARA QUEM NÃO É VIP
+        html_lock = f"<div class='glass-card' style='position:relative; text-align:center; overflow:hidden;'><div style='filter: blur(8px); padding:20px;'><h3 style='color:{c_prim};'>Dupla de Ouro</h3><p style='color:{c_sec};'>Odd: @1.85 | Confiança: 99%</p></div><div style='position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:{c_bg_badge}; padding:20px; border-radius:12px; width:80%;'><h1>🔒</h1><h4 style='color:{cor_neon};'>ACESSO RESTRITO</h4><p style='font-size:11px; color:{c_prim};'>Eleve seu plano para Supremo.</p></div></div>"
+        st.markdown(html_lock, unsafe_allow_html=True)
+    else:
+        # BINGO SAFE FUNCIONANDO
+        if not st.session_state.analisados:
+            st.info("⚠️ Varredura prévia requerida. Vá no 'RADAR', selecione uma liga e processe os dados primeiro.")
+        else:
+            seguros = [j for j in st.session_state.analisados if 1.15 <= j['o'] <= 1.65]
+            seguros = sorted(seguros, key=lambda x: x['conf'], reverse=True)
 
+            if len(seguros) >= 2:
+                safe_pick = seguros[:2]
+                odd_safe_total = safe_pick[0]['o'] * safe_pick[1]['o']
+                media_conf = (safe_pick[0]['conf'] + safe_pick[1]['conf']) // 2
+
+                html_safe = f"<div class='glass-card' style='border: 1px solid {cor_neon};'><div style='text-align:center; margin-bottom: 15px;'><span style='background:{cor_neon}; color:#000; padding:5px 15px; border-radius:20px; font-weight:bold; font-size:12px;'>🏆 IA ASSERTIVIDADE: {media_conf}%</span></div><div style='border-left: 4px solid {cor_neon}; padding-left: 10px; margin-bottom: 10px;'><div style='color:{c_prim}; font-weight:bold; font-size: 16px;'>⚽ {safe_pick[0]['jogo']}</div><div style='color:{c_sec}; font-size: 14px;'>🎯 {safe_pick[0]['m']} | <span style='color:{cor_neon}; font-weight:bold;'>@{safe_pick[0]['o']:.2f}</span></div></div><div style='border-left: 4px solid {cor_neon}; padding-left: 10px; margin-bottom: 15px;'><div style='color:{c_prim}; font-weight:bold; font-size: 16px;'>⚽ {safe_pick[1]['jogo']}</div><div style='color:{c_sec}; font-size: 14px;'>🎯 {safe_pick[1]['m']} | <span style='color:{cor_neon}; font-weight:bold;'>@{safe_pick[1]['o']:.2f}</span></div></div><hr style='border-color: {card_border};'><h3 style='text-align:center; color:{cor_neon}; text-shadow: 0 0 10px {cor_neon}60;'>📊 ODD FINAL: {odd_safe_total:.2f}</h3></div>"
+                st.markdown(html_safe, unsafe_allow_html=True)
+
+                if st.button("🔥 COPIAR SAFE PARA O MEU BILHETE", use_container_width=True):
+                    st.session_state.bilhete.extend(safe_pick)
+                    st.toast("✅ Bilhete Safe copiado com sucesso! Vá em OPERAÇÕES.")
+                    tocar_som_customizado()
+            else:
+                st.warning("⚠️ A IA não encontrou 2 jogos com perfil 'Safe' (Odds 1.15 - 1.65) nesta varredura. Tente outra liga no Radar.")
+
+# ==========================================
+# ABA 5: HUB E PERFIL
+# ==========================================
 with t5:
     st.markdown(f"<h3 style='color:{c_prim}; text-align:center; font-weight:900;'>V8 <span style='color:{cor_neon};'>HUB</span></h3>", unsafe_allow_html=True)
     
