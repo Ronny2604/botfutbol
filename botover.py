@@ -71,9 +71,7 @@ def calcular_forca_equipa(nome_equipa):
     num = int(hash_object.hexdigest(), 16)
     return 60 + (num % 35), 50 + ((num // 10) % 40) 
 
-# --- MOTOR FAILSAFE (ANTI-CRASH) ---
 def gerar_dados_mock():
-    # Se a API falhar, o app gera estes jogos hiper-realistas automaticamente
     times = ["Real Madrid", "Barcelona", "Man City", "Arsenal", "Bayern Munique", "Flamengo", "Palmeiras", "Liverpool", "Chelsea", "Milan", "Inter", "Napoli"]
     random.shuffle(times)
     mock = []
@@ -145,13 +143,13 @@ st.markdown(f"""
         background: transparent !important;
         font-family: 'Inter', sans-serif !important;
     }}
-    .stApp {{
+    #root {{
         background: {'linear-gradient(rgba(240,242,246,0.9), rgba(255,255,255,0.95))' if is_light else 'radial-gradient(circle at 50% 0%, rgba(20,22,30,0.9), rgba(10,10,12,1))'}, url('{LINK_SUA_IMAGEM_DE_FUNDO}') !important;
         background-size: cover !important;
         background-position: center !important;
         background-attachment: fixed !important;
-        min-height: 100vh !important;
-        color: {c_prim} !important;
+        min-height: 100dvh !important;
+        width: 100vw !important;
     }}
 
     header[data-testid="stHeader"] {{ display: none !important; }}
@@ -161,7 +159,7 @@ st.markdown(f"""
     .stMarkdown p, .stText p, h1, h2, h3, h4, h5, h6, label {{ color: {c_prim} !important; }}
     div[data-baseweb="select"] > div, div[data-baseweb="input"] > div, textarea {{ background-color: {card_bg} !important; color: {c_prim} !important; border: 1px solid {card_border} !important; }}
     
-    ::-webkit-scrollbar {{ width: 0px; background: transparent; }} 
+    ::-webkit-scrollbar {{ width: 0px; background: transparent; }}
     
     .metallic-text {{ 
         background: linear-gradient(180deg, #ffffff 0%, {cor_neon} 100%);
@@ -173,17 +171,19 @@ st.markdown(f"""
     div[data-testid="stTabs"] > div:first-of-type {{ 
         position: sticky !important; top: 10px !important; z-index: 999 !important;
         background-color: {tab_bg} !important; backdrop-filter: blur(15px) !important; 
-        border-radius: 50px !important; padding: 5px !important; margin-bottom: 20px !important; 
-        border: 1px solid {card_border} !important; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        -webkit-backdrop-filter: blur(15px) !important; border-radius: 50px !important; 
+        padding: 5px !important; margin-bottom: 20px !important; border: 1px solid {card_border} !important; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     }}
     div[data-testid="stTabs"] button[role="tab"] {{ color: {c_sec} !important; font-weight: 700 !important; font-size: 11px !important; background: transparent !important; border: none !important; border-radius: 30px !important; padding: 10px 15px !important; transition: all 0.3s ease !important;}}
     div[data-testid="stTabs"] button[role="tab"]:hover {{ color: {c_prim} !important; }}
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {{ color: {cor_neon} !important; background: {tab_active_bg} !important; border-bottom: 2px solid {cor_neon} !important; }}
     
     .glass-card {{ 
-        background: {card_bg}; backdrop-filter: blur(12px); border: 1px solid {card_border}; 
-        border-radius: 16px; padding: 15px; margin-bottom: 15px; width: 100%; box-sizing: border-box; 
-        transition: transform 0.3s ease, box-shadow 0.3s ease; color: {c_prim};
+        background: {card_bg}; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border: 1px solid {card_border}; border-radius: 16px; padding: 15px; margin-bottom: 15px; 
+        width: 100%; box-sizing: border-box; transition: transform 0.3s ease, box-shadow 0.3s ease; 
+        color: {c_prim};
         box-shadow: inset 0 1px 1px rgba(255,255,255,0.1), 0 8px 20px rgba(0,0,0,0.4);
     }}
     
@@ -205,6 +205,7 @@ st.markdown(f"""
     
     .live-badge {{ background-color: #ff3333; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; animation: pulsar 1.5s infinite; display: inline-block; }}
     @keyframes pulsar {{ 0% {{ box-shadow: 0 0 0 0 rgba(255,51,51,0.7); }} 70% {{ box-shadow: 0 0 0 6px rgba(255,51,51,0); }} 100% {{ box-shadow: 0 0 0 0 rgba(255,51,51,0); }} }}
+    
     .loading-pulse {{ animation: pulse-text 1.5s infinite; color: {c_sec}; font-family: monospace; font-size: 12px; }}
     @keyframes pulse-text {{ 0% {{ opacity: 0.4; }} 50% {{ opacity: 1; }} 100% {{ opacity: 0.4; }} }}
     </style>
@@ -212,7 +213,7 @@ st.markdown(f"""
 
 url_key = st.query_params.get("key", "")
 
-# --- TELA DE LOGIN ---
+# --- 5. TELA DE LOGIN VIP ---
 if not st.session_state.autenticado:
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     with st.container():
@@ -236,7 +237,10 @@ if not st.session_state.autenticado:
         st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
-# --- TOP BAR ---
+# --- NEWS TICKER E AVISOS ---
+if st.session_state.autenticado and random.random() < 0.2:
+    st.toast(random.choice([f"💸 Marcos_SP sacou {fmt_moeda(850)} agora!", f"🚨 Odd do {jogos_vitrine[0]['casa']} derretendo!", "🔥 340 VIPs online operando.", "💰 Ana_Silva recuperou o Red no Cashout exato."]))
+
 noticias = [f"🚨 URGENTE: {jogos_vitrine[3]['casa']} com surto viral no elenco.", "💰 Sindicato Asiático injetou $2M na linha de Over Gols.", "🔥 Win Rate global da IA atingiu 89.4% nas últimas 24h."]
 st.markdown(f"<marquee style='background: {c_bg_badge}; color: {cor_neon}; padding: 5px; font-size: 11px; font-weight: bold; border-radius: 4px; margin-bottom: 10px;'>{' &nbsp; | &nbsp; '.join(noticias)}</marquee>", unsafe_allow_html=True)
 
@@ -246,6 +250,7 @@ saldo_total = sum(st.session_state.bancas.values())
 if saldo_total < st.session_state.banca_inicial_dia * 0.9:
     st.error("⚠️ ALERTA DE STOP LOSS: Sua banca caiu mais de 10% hoje. Aconselhamos encerrar as operações por 24h.")
 
+# --- TOP BAR VIP ---
 st.markdown(f"""
     <div style='display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px; padding: 15px; background: {card_bg}; border-radius: 16px; border: 1px solid {card_border}; width: 100%; box-sizing: border-box; box-shadow: inset 0 1px 1px rgba(255,255,255,0.1), 0 4px 15px rgba(0,0,0,0.2);'>
         <div style='display:flex; align-items:center;'>
@@ -262,7 +267,7 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# --- NAVEGAÇÃO ---
+# --- 6. NAVEGAÇÃO PRINCIPAL ---
 t1, t2, t3, t4, t5 = st.tabs(["📊 HOME", "🎯 RADAR", "🧾 OPERAÇÕES", "🛡️ SAFE", "⚙️ HUB"])
 LIGAS_DISPONIVEIS = {"🇬🇧 Premier League": "soccer_epl", "🇪🇺 Champions League": "soccer_uefa_champs_league", "🇪🇸 La Liga": "soccer_spain_la_liga", "🇧🇷 Brasileirão": "soccer_brazil_campeonato"}
 
@@ -317,7 +322,7 @@ with t1:
         """, unsafe_allow_html=True)
 
 # ==========================================
-# ABA 2: RADAR A.I
+# ABA 2: RADAR A.I (COM OVERRIDE MANUAL)
 # ==========================================
 with t2:
     st.markdown("<h4 class='metallic-text'>SELECTION HUB</h4>", unsafe_allow_html=True)
@@ -325,7 +330,7 @@ with t2:
     modo_sniper = st.toggle("🎯 Ativar Foco Sniper (Apenas +95% Confiança)")
 
     if st.session_state.time_coracao and not modo_sniper:
-        st.markdown(f"<div class='glass-card' style='border: 1px solid {cor_neon};'><span style='color:{cor_neon}; font-size:12px; font-weight:bold;'>❤️ TIME DO CORAÇÃO: {st.session_state.time_coracao.upper()}</span><br><span style='color:{c_prim}; font-size:14px;'>O modelo detetou +EV para a próxima partida.</span></div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='glass-card' style='border: 1px solid {cor_neon};'><span style='color:{cor_neon}; font-size:12px; font-weight:bold;'>❤️ TIME DO CORAÇÃO: {st.session_state.time_coracao.upper()}</span><br><span style='color:{c_prim}; font-size:14px;'>O modelo detetou +EV para a próxima partida. Sugestão: <b>Over Cartões</b>.</span></div>", unsafe_allow_html=True)
 
     with st.expander("🤖 ORÁCULO A.I. (CHAT)"):
         pergunta = st.text_input("Comando de Análise:", placeholder="Ex: Analise a liquidez do Flamengo")
@@ -337,16 +342,39 @@ with t2:
                 t_alvo = pergunta.split()[-1].capitalize()
                 p_msg.markdown(f"<div class='terminal-card' style='border-color:{cor_neon};'>> ALVO: {t_alvo.upper()}<br>> STATUS: OPORTUNIDADE +EV DETECTADA.<br>> SUGESTÃO: AGUARDAR ODD BATER @1.65.</div>", unsafe_allow_html=True)
 
+    # --- NOVO: OVERRIDE MANUAL DE VOLTA ---
+    with st.expander("✍️ OVERRIDE MANUAL (Inserir Grade)"):
+        st.markdown(f"<p style='color:{c_sec}; font-size: 11px;'>Insira seus próprios jogos para que a IA analise o risco e crie as métricas Táticas, xG e Clima.</p>", unsafe_allow_html=True)
+        grade = st.text_area("Input de Jogos:", placeholder="Ex: Flamengo x Vasco\nReal Madrid x Chelsea")
+        if st.button("FORÇAR ANÁLISE MANUAL"):
+            if grade:
+                jogos = [j for j in grade.split('\n') if 'x' in j.lower()]
+                st.session_state.analisados = []
+                for j in jogos:
+                    parts = j.lower().split('x')
+                    if len(parts) == 2:
+                        c, f = parts[0].strip().title(), parts[1].strip().title()
+                        ap = {"m": random.choice([f"Vitória {c}", "Ambas Marcam", "Over 1.5", "Under 2.5"]), "o": round(random.uniform(1.3, 2.5), 2)} 
+                        atk, dfs = calcular_forca_equipa(c)
+                        drop = random.choice([True, False, False])
+                        st.session_state.analisados.append({
+                            "jogo": f"{c} x {f}", "casa": c, "fora": f, 
+                            "m": ap["m"], "o": ap["o"], "conf": random.randint(85, 99), 
+                            "atk": atk, "def": dfs, 
+                            "xg_c": round(random.uniform(0.5, 3.0), 2), "xg_f": round(random.uniform(0.2, 1.8), 2), 
+                            "weather": random.choice(["☀️ Claro", "🌧️ Chuva Leve", "❄️ Frio Intenso"]), 
+                            "streak": random.randint(1, 5), "drop": drop
+                        })
+                st.success("Matriz atualizada com sucesso! Verifique a lista abaixo.")
+
     st.markdown(f"<br><p style='color:{c_sec}; font-size: 12px; font-weight:bold;'>VARREDURA DO MERCADO ASIÁTICO</p>", unsafe_allow_html=True)
     codigo_da_liga = LIGAS_DISPONIVEIS[st.selectbox("Selecionar Filtro Global:", list(LIGAS_DISPONIVEIS.keys()))]
     
     if st.button("EXECUTAR SCANNER QUANTITATIVO"):
         with st.spinner("Interceptando dados de bookmakers..."):
             dados = buscar_dados_api(codigo_da_liga) 
-            # AQUI ESTÁ A BLINDAGEM: Se dados vier vazio ou como dict de erro, o Fallback gera a grelha
             if not isinstance(dados, list) or len(dados) == 0:
                 dados = gerar_dados_mock()
-                
             st.session_state.analisados = []
             for jogo in dados[:10]:
                 c, f = jogo.get('home_team', 'Casa'), jogo.get('away_team', 'Fora')
@@ -360,21 +388,19 @@ with t2:
         st.markdown(f"<hr style='border-color: {card_border};'>", unsafe_allow_html=True)
         for idx, item in enumerate(st.session_state.analisados):
             if modo_sniper and item.get('conf', 0) < 95: continue
-            
             drop_html = f"<span style='color:#00e5ff; font-weight:bold; font-size:10px;'>📉 DROPPING ODD</span>" if item.get('drop', False) else ""
             
-            # STRING NUMA LINHA PARA NÃO BUGAR O STREAMLIT
             html_card = f"<div class='glass-card'><div style='display:flex; justify-content:space-between; align-items:center;'><div style='font-size:14px; font-weight:900; color:{c_prim};'>{item.get('casa','A')} <span style='color:{c_sec}; font-size:10px;'>VS</span> {item.get('fora','B')} {drop_html}</div><div style='color:{cor_neon}; font-weight:900; font-size:16px;'>@{item.get('o', 1.5)}</div></div><div style='margin-top:15px; font-size:10px; color:{c_sec};'>PRESSÃO OFENSIVA (xG: {item.get('xg_c', 1.5)})</div><div class='progress-bg'><div class='progress-fill-atk' style='width:{item.get('atk', 50)}%;'></div></div><div style='margin-top:5px; font-size:10px; color:{c_sec};'>MURALHA DEFENSIVA (xG: {item.get('xg_f', 1.0)})</div><div class='progress-bg'><div class='progress-fill-def' style='width:{item.get('def', 50)}%;'></div></div><div style='margin-top:15px; background:{c_bg_badge}; padding:10px; border-radius:8px;'><span style='font-size:11px; color:{c_sec};'>ALGORITMO V8:</span> <b style='color:{c_prim};'>{item.get('m', 'Análise')}</b><br><span style='font-size:11px; color:{c_sec};'>CONFIANÇA:</span> <b style='color:{cor_neon};'>{item.get('conf', 90)}%</b></div></div>"
             st.markdown(html_card, unsafe_allow_html=True)
             
             col_add1, col_add2 = st.columns(2)
             with col_add1:
-                if st.button("➕ INJETAR BILHETE", key=f"btn_m_{idx}"): st.session_state.bilhete.append(item); st.toast("✅ Adicionado!")
+                if st.button("➕ INJETAR BILHETE", key=f"btn_m_{idx}"): st.session_state.bilhete.append(item); st.toast("✅ Adicionado à Operação!")
             with col_add2:
-                if st.button("💾 SALVAR DICA", key=f"btn_s_{idx}"): st.session_state.analises_salvas.append(item); st.toast("💾 Salvo!")
+                if st.button("💾 SALVAR DICA", key=f"btn_s_{idx}"): st.session_state.analises_salvas.append(item); st.toast("💾 Salvo no Tracking Pessoal!")
 
 # ==========================================
-# ABA 3: OPERAÇÕES (KELLY CRITERION INCLUSO)
+# ABA 3: OPERAÇÕES E TRACKING
 # ==========================================
 with t3:
     st.markdown("<h4 class='metallic-text'>CENTRAL DE OPERAÇÕES</h4>", unsafe_allow_html=True)
@@ -432,7 +458,7 @@ with t3:
                 st.session_state.bilhete = [] 
                 st.rerun()
     else:
-        st.info("Carrinho vazio.")
+        st.info("Carrinho de múltiplas vazio.")
 
     st.markdown(f"<h4 class='metallic-text' style='margin-top: 40px;'>📂 TRACKING DE SINGLES</h4>", unsafe_allow_html=True)
     if st.session_state.analises_salvas:
@@ -452,17 +478,17 @@ with t3:
             with c_d:
                 if st.button("🗑️", key=f"td_{i}"): st.session_state.analises_salvas.pop(i); st.rerun()
     else:
-        st.caption("Nenhuma single salva para validação.")
+        st.caption("Nenhuma single salva para validação. Use o 'Override Manual' ou o Scanner.")
 
 # ==========================================
-# ABA 4: SAFE (BINGO DO DIA RESTAURADO)
+# ABA 4: SAFE (BINGO DO DIA)
 # ==========================================
 with t4:
     st.markdown("<h4 class='metallic-text'>ALTO EV (SAFE)</h4>", unsafe_allow_html=True)
     if not st.session_state.is_vip:
         st.markdown(f"<div class='glass-card' style='position:relative; text-align:center; overflow:hidden;'><div style='filter: blur(8px); padding:20px;'><h3 style='color:{c_prim};'>Dupla de Ouro</h3><p style='color:{c_sec};'>Odd: @1.85 | Confiança: 99%</p></div><div style='position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:{c_bg_badge}; padding:20px; border-radius:12px; width:80%;'><h1>🔒</h1><h4 style='color:{cor_neon};'>ACESSO RESTRITO</h4><p style='font-size:11px; color:{c_prim};'>Eleve seu plano para Supremo.</p></div></div>", unsafe_allow_html=True)
     else:
-        if not st.session_state.analisados: st.info("⚠️ Varredura prévia requerida no RADAR.")
+        if not st.session_state.analisados: st.info("⚠️ Varredura prévia requerida no RADAR (ou via Override Manual).")
         else:
             seguros = sorted([j for j in st.session_state.analisados if 1.15 <= j.get('o', 1.5) <= 1.65], key=lambda x: x.get('conf', 0), reverse=True)
             if len(seguros) >= 2:
@@ -516,6 +542,16 @@ with t5:
 
     st.markdown(f"<p style='color:{c_sec}; font-size:11px; font-weight:bold; margin-top:20px;'>📓 DIÁRIO DE TRADER</p>", unsafe_allow_html=True)
     st.text_area("Notas Encriptadas:", value=st.session_state.diario_bordo, placeholder="Regra 1: Evitar MLS de madrugada...", key="diario_bordo", label_visibility="collapsed")
+
+    if st.session_state.is_admin:
+        st.markdown(f"<div class='glass-card' style='border-color:#ff3333; margin-top:20px;'><p style='color:#ff3333; font-size:11px; font-weight:bold;'>🛠️ ADMIN PANEL</p>", unsafe_allow_html=True)
+        n_links = st.text_area("Links de Afiliados (1 por linha):", value="\n".join(st.session_state.links_afiliados), height=60)
+        if st.button("Atualizar DB de Links"): st.session_state.links_afiliados = [l.strip() for l in n_links.split('\n') if l.strip()]
+        c_nome = st.text_input("Nova Key:")
+        if st.button("FORJAR ACESSO"):
+            salvar_key(c_nome, 24)
+            st.code(f"{LINK_PAINEL}?key={c_nome}")
+        st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("<br><br>", unsafe_allow_html=True)
     if st.button("ENCERRAR SESSÃO", type="primary"):
