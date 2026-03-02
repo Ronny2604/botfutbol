@@ -129,13 +129,16 @@ elif tema == "🔴 Vermelho Kamikaze": cor_neon = "#ff3333"
 elif tema == "🟣 Rosa Choque": cor_neon = "#ff00ff"
 else: cor_neon = "#ff00ff" if is_fem else "#00ff88"
 
-# --- 4. CSS FOOTI PREMIUM + ANIMAÇÕES DE BOTÕES ---
+# --- 4. CSS FOOTI PREMIUM (CORREÇÃO DE ESPAÇO NO TOPO) ---
 st.markdown(f"""
     <style>
+    /* REMOVER ESPAÇO PRETO NO TOPO (Esconde header nativo e ajusta padding) */
+    header[data-testid="stHeader"] {{ display: none !important; }}
+    .block-container {{ padding-top: 1rem !important; margin-top: -1rem !important; }}
+    
     #MainMenu {{visibility: hidden !important;}}
     .stDeployButton {{display:none !important;}}
     footer {{visibility: hidden !important;}}
-    header {{visibility: hidden !important;}}
     
     @keyframes fadeIn {{ from {{ opacity: 0; transform: translateY(10px); }} to {{ opacity: 1; transform: translateY(0); }} }}
     
@@ -164,9 +167,7 @@ st.markdown(f"""
         white-space: nowrap !important;
         transition: color 0.3s ease !important;
     }}
-    div[data-testid="stTabs"] button[role="tab"]:hover {{
-        color: #fff !important;
-    }}
+    div[data-testid="stTabs"] button[role="tab"]:hover {{ color: #fff !important; }}
     div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {{
         color: {cor_neon} !important;
         background-color: rgba(255,255,255,0.05) !important;
@@ -187,30 +188,14 @@ st.markdown(f"""
     .game-card {{ background-color: rgba(26, 27, 34, 0.9); padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 4px solid #333; transition: all 0.3s ease; border-top: 1px solid #2d2f36; border-right: 1px solid #2d2f36; border-bottom: 1px solid #2d2f36; }}
     .game-card:hover {{ border-left: 4px solid {cor_neon}; box-shadow: 0 4px 15px rgba(0,0,0,0.5); transform: translateY(-2px); }}
     
-    /* === ANIMAÇÕES DE BOTÕES (HOVER E CLICK) === */
     .stButton>button {{ 
-        background: {cor_neon} !important; 
-        color: #000 !important; 
-        font-weight: 900 !important; 
-        border-radius: 8px !important; 
-        border: none !important; 
-        padding: 10px 20px !important; 
-        width: 100%; 
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        background: {cor_neon} !important; color: #000 !important; font-weight: 900 !important; 
+        border-radius: 8px !important; border: none !important; padding: 10px 20px !important; 
+        width: 100%; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
         box-shadow: 0 4px 6px rgba(0,0,0,0.3) !important;
     }}
-    /* Efeito Hover (Brilho e Flutuação) */
-    .stButton>button:hover {{ 
-        transform: translateY(-3px) scale(1.02) !important; 
-        filter: brightness(1.1) !important; 
-        box-shadow: 0 8px 20px {cor_neon}60 !important;
-    }}
-    /* Efeito Click (Mola/Pressionar) */
-    .stButton>button:active {{ 
-        transform: translateY(2px) scale(0.95) !important; 
-        box-shadow: 0 2px 4px {cor_neon}40 !important;
-        filter: brightness(0.9) !important;
-    }}
+    .stButton>button:hover {{ transform: translateY(-3px) scale(1.02) !important; filter: brightness(1.1) !important; box-shadow: 0 8px 20px {cor_neon}60 !important; }}
+    .stButton>button:active {{ transform: translateY(2px) scale(0.95) !important; box-shadow: 0 2px 4px {cor_neon}40 !important; filter: brightness(0.9) !important; }}
     
     .btn-side {{ display: block; padding: 12px; margin-bottom: 10px; text-align: center; border-radius: 8px; font-weight: bold; text-decoration: none; color: white !important; font-size: 14px; transition: all 0.2s ease; }}
     .btn-side:hover {{ transform: translateY(-3px) scale(1.02); filter: brightness(1.1); box-shadow: 0 8px 15px rgba(255,255,255,0.1); }}
@@ -262,7 +247,7 @@ if not st.session_state.autenticado:
 
 win_rate = (st.session_state.total_acertos / st.session_state.total_jogos) * 100 if st.session_state.total_jogos > 0 else 0
 
-# --- 6. NAVEGAÇÃO PRINCIPAL (ABAS NO TOPO ESTILIZADAS) ---
+# --- 6. NAVEGAÇÃO PRINCIPAL ---
 st.markdown("<br>", unsafe_allow_html=True)
 t1, t2, t3, t4, t5 = st.tabs(["🏠 INÍCIO", "🎯 RADAR", "📋 BILHETE", "🛡️ SAFE", "⚙️ PERFIL"])
 
@@ -273,7 +258,7 @@ LIGAS_DISPONIVEIS = {
 }
 
 # ==========================================
-# ABA 1: INÍCIO (Dashboard, Live Scores e Histórico)
+# ABA 1: INÍCIO (Dashboard, Live Scores Dinâmicos e Histórico)
 # ==========================================
 with t1:
     st.markdown(f"<h4 class='neon-text'>BEM-VINDO</h4>", unsafe_allow_html=True)
@@ -297,14 +282,27 @@ with t1:
     )
     st.markdown(html_stats, unsafe_allow_html=True)
 
+    # --- SIMULADOR DE JOGOS AO VIVO (TEMPO DINÂMICO) ---
     st.markdown("<h4 style='color:white; margin-top: 20px;'>🔴 JOGOS A DECORRER</h4>", unsafe_allow_html=True)
+    
+    # A mágica do tempo: usa o minuto atual do relógio para gerar um tempo de jogo
+    minuto_atual = datetime.now().minute
+    tempo_jogo_1 = (minuto_atual + 23) % 90 + 1 # Jogo 1 varia de 1 a 90 min
+    tempo_jogo_2 = (minuto_atual + 67) % 90 + 1 # Jogo 2 em tempo diferente
+    
+    # Simula gol baseado na passagem do tempo
+    gol_c_1 = (minuto_atual // 15) % 3
+    gol_f_1 = (minuto_atual // 25) % 2
+    gol_c_2 = (minuto_atual // 20) % 4
+    gol_f_2 = (minuto_atual // 30) % 2
+    
     html_live = (
         f"<div style='background-color: rgba(26,27,34,0.9); border-left: 3px solid #ff3333; padding: 10px 15px; margin-bottom: 10px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;'>"
-        f"<div><span class='live-badge'>65'</span> <span style='color:white; font-weight:bold; font-size: 14px; margin-left: 10px;'>Arsenal 1 x 0 Chelsea</span></div>"
+        f"<div><span class='live-badge'>{tempo_jogo_1}'</span> <span style='color:white; font-weight:bold; font-size: 14px; margin-left: 10px;'>Arsenal {gol_c_1} x {gol_f_1} Chelsea</span></div>"
         f"<div style='color:#bbb; font-size: 12px;'>IA previu: <span style='color:{cor_neon}; font-weight:bold;'>Vitória Arsenal</span></div>"
         f"</div>"
         f"<div style='background-color: rgba(26,27,34,0.9); border-left: 3px solid #ff3333; padding: 10px 15px; margin-bottom: 20px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;'>"
-        f"<div><span class='live-badge'>82'</span> <span style='color:white; font-weight:bold; font-size: 14px; margin-left: 10px;'>Flamengo 2 x 1 Vasco</span></div>"
+        f"<div><span class='live-badge'>{tempo_jogo_2}'</span> <span style='color:white; font-weight:bold; font-size: 14px; margin-left: 10px;'>Flamengo {gol_c_2} x {gol_f_2} Vasco</span></div>"
         f"<div style='color:#bbb; font-size: 12px;'>IA previu: <span style='color:{cor_neon}; font-weight:bold;'>Mais 2.5 Gols</span></div>"
         f"</div>"
     )
